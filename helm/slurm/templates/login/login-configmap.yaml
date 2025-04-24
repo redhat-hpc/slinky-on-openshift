@@ -1,0 +1,27 @@
+{{- /*
+SPDX-FileCopyrightText: Copyright (C) SchedMD LLC.
+SPDX-License-Identifier: Apache-2.0
+*/}}
+
+{{- if .Values.login.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "slurm.login.name" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "slurm.login.labels" . | nindent 4 }}
+data:
+  authorized_keys: |
+    {{- range $key := .Values.login.rootSshAuthorizedKeys }}
+    {{ $key }}
+    {{- end }}{{- /* range $key := .Values.login.rootSshAuthorizedKeys */}}
+  sshd_config: |
+    {{- range $key, $value := .Values.login.sshdConfig }}
+    {{ $key }} {{ $value }}
+    {{- end }}
+  nsswitch.conf: |
+    {{- range $key, $value := .Values.login.nsswitchConf }}
+    {{ $key }}: {{ $value }}
+    {{- end }}{{- /* range $key, $value := .Values.login.nsswitchConf */}}
+{{- end }}{{- /* if .Values.login.enabled */}}
