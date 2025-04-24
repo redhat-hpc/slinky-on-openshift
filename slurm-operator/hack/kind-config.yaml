@@ -1,0 +1,15 @@
+---
+# SPDX-FileCopyrightText: Copyright (C) SchedMD LLC.
+# SPDX-License-Identifier: Apache-2.0
+# https://kind.sigs.k8s.io/docs/user/configuration/
+# https://kind.sigs.k8s.io/docs/user/loadbalancer/
+# https://kubernetes.io/docs/reference/labels-annotations-taints/
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker
+  - role: worker
+  - role: worker
+  - role: worker

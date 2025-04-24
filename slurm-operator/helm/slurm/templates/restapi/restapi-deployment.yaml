@@ -1,0 +1,115 @@
+{{- /*
+SPDX-FileCopyrightText: Copyright (C) SchedMD LLC.
+SPDX-License-Identifier: Apache-2.0
+*/}}
+
+{{- if .Values.restapi.enabled }}
+{{- if not $.Values.controller.enabled }}
+  {{- fail "Slurm restapi requires `controller.enabled=true`." -}}
+{{- end }}{{- /* if not $.Values.controller.enabled */}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "slurm.restapi.name" . }}
+  namespace: {{ include "slurm.namespace" . }}
+  labels:
+    {{- include "slurm.restapi.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.restapi.replicas | default 1 }}
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      {{- include "slurm.restapi.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: slurmrestd
+      labels:
+        {{- include "slurm.restapi.labels" . | nindent 8 }}
+    spec:
+      priorityClassName: {{ .Values.restapi.priorityClassName | default .Values.priorityClassName }}
+      automountServiceAccountToken: false
+      dnsConfig:
+        {{- include "slurm.dnsConfig" . | nindent 8 }}
+      {{- if .Values.restapi.affinity }}
+      affinity:
+        {{- .Values.restapi.affinity | toYaml | nindent 8 }}
+      {{- end }}{{- /* if .Values.restapi.affinity */}}
+      {{- include "slurm.imagePullSecrets" . | nindent 6 }}
+      initContainers:
+        - name: init
+          image: {{ include "slurm.authcred.imageRef" . }}
+          imagePullPolicy: {{ .Values.authcred.imagePullPolicy | default (include "slurm.imagePullPolicy" .) }}
+          {{- if .Values.authcred.resources }}
+          resources:
+            {{- .Values.authcred.resources | toYaml | nindent 12 }}
+          {{- end }}{{- /* if .Values.authcred.resources */}}
+          env:
+            - name: SLURM_USER
+              value: {{ include "slurm.user" . }}
+          command:
+            - tini
+            - -g
+            - --
+            - bash
+            - -c
+            - |
+              {{- range .Files.Lines "scripts/init.sh" }}
+              {{ . }}
+              {{- end }}{{- /* range .Files.Lines "scripts/init.sh" */}}
+          volumeMounts:
+            {{- include "slurm.init.volumeMounts" . | nindent 12 }}
+      containers:
+        - name: slurmrestd
+          image: {{ include "slurm.restapi.imageRef" . }}
+          imagePullPolicy: {{ .Values.restapi.imagePullPolicy | default (include "slurm.imagePullPolicy" .) }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534 # nobody
+            runAsGroup: 65534 # nobody
+          {{- if .Values.restapi.resources }}
+          resources:
+            {{- .Values.restapi.resources | toYaml | nindent 12 }}
+          {{- end }}{{- /* if .Values.restapi.resources */}}
+          env:
+            - name: SLURM_JWT
+              value: daemon
+            - name: SLURMRESTD_SECURITY
+              value: disable_unshare_files,disable_unshare_sysv
+          args:
+            {{- if not .Values.accounting.enabled }}
+            - -s
+            - openapi/slurmctld
+            {{- end }}
+            - "0.0.0.0:{{- include "slurm.restapi.port" . }}"
+          ports:
+            - name: slurmrestd
+              containerPort: 6820
+          startupProbe:
+            tcpSocket:
+              port: slurmrestd
+          livenessProbe:
+            tcpSocket:
+              port: slurmrestd
+          readinessProbe:
+            tcpSocket:
+              port: slurmrestd
+          volumeMounts:
+            {{- include "slurm.volumeMounts" . | nindent 12 }}
+      {{- with .Values.restapi.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with .Values.restapi.tolerations */}}
+      volumes:
+        {{- include "slurm.volumes" . | nindent 8 }}
+        - name: slurm-config
+          projected:
+            defaultMode: 0600
+            sources:
+              - configMap:
+                  name: {{ include "slurm.configMapName" . }}
+              - secret:
+                  name: {{ include "slurm.auth.secretName" . }}
+{{- end }}{{- /* if .Values.restapi.enabled */}}
