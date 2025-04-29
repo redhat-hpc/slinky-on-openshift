@@ -33,7 +33,7 @@ oc create -f extras/scc.yaml
 Install glauth for simulating LDAP environment
 
 ```
-oc apply -f extras/glauth.yaml
+oc apply -f extras/glauth.yaml -n slurm
 ```
 
 Install the Slurm Operator deployment and then deploy Slurm
@@ -43,6 +43,23 @@ helm upgrade -i -n slurm slurm-operator upstream/slurm-operator/helm/slurm-opera
 
 helm dependency build upstream/slurm-operator/helm/slurm/
 helm upgrade -i -n slurm slurm upstream/slurm-operator/helm/slurm/ --values helm/values-slurm.yaml
+```
+
+### Add OpenShift Route
+
+Sometimes it is difficult to open up ports on the cluster for a LoadBalancer or NodePort service. Alternatively we can use the OpenShift Router (L4/L7 LB) to proxy SSH through a TLS tunnel.
+
+Apply the Route and Service:
+
+```
+oc apply -f extras/ssh-route.yaml
+oc get route -n slurm
+```
+
+Using SSH client and openssl, SSH through OpenShift Route proxy to the login pod
+
+```
+ssh -o ProxyCommand="openssl s_client -verify_quiet -quiet -connect <route name>:443 " user1@127.0.0.1
 ```
 
 ## Enable Autoscaling (optional)

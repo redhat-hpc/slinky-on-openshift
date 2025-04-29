@@ -268,7 +268,7 @@ controller:
     #
     # -- (string)
     # Create a `PersistentVolumeClaim` with this storage class.
-    storageClass: null
+    storageClass: lvms-vg1
     #
     # -- (list)
     # Create a `PersistentVolumeClaim` with these access modes.
@@ -306,7 +306,7 @@ login:
     #
     # -- (string)
     # Set the image repository to use.
-    repository: quay.io/slinky-on-openshift/login
+    repository: quay.io/slinky-on-openshift/login-extra
     #
     # -- (string)
     # Set the image tag to use.
@@ -449,7 +449,7 @@ compute:
     #
     # -- (string)
     # Set the image repository to use.
-    repository: quay.io/slinky-on-openshift/slurmd-custom
+    repository: quay.io/slinky-on-openshift/slurmd-extra
     #
     # -- (string)
     # Set the image tag to use.
@@ -795,7 +795,7 @@ mariadb:
     persistence:
       enabled: true
       existingClaim: ""
-      storageClass: null
+      storageClass: lvms-vg1
       labels: {}
       annotations: {}
       accessModes:
