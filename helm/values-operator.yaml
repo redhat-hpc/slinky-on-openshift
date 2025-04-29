@@ -44,19 +44,19 @@ operator:
   #
   # -- (string)
   # Set the image pull policy.
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: Always
   #
   # Image configurations.
   image:
     #
     # -- (string)
     # Sets the image repository to use.
-    repository: image-registry.openshift-image-registry.svc:5000/slurm/slurm-operator
+    repository: quay.io/slinky-on-openshift/slurm-operator
     #
     # -- (string)
     # Sets the image tag to use.
     # @default -- The Release version.
-    tag: 0.0.1
+    tag: latest
   #
   # Service account configurations.
   serviceAccount:
@@ -112,19 +112,19 @@ webhook:
   #
   # -- (string)
   # Set the image pull policy.
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: Always
   #
   # Image configurations.
   image:
     #
     # -- (string)
     # Sets the image repository to use.
-    repository: image-registry.openshift-image-registry.svc:5000/slurm/slurm-operator-webhook
+    repository: quay.io/slinky-on-openshift/slurm-operator-webhook
     #
     # -- (string)
     # Sets the image tag to use.
     # @default -- The Release version.
-    tag: 0.0.1
+    tag: latest
   #
   # Service account configurations.
   serviceAccount:

@@ -223,11 +223,11 @@ authcred:
     #
     # -- (string)
     # Set the image repository to use.
-    repository: image-registry.openshift-image-registry.svc:5000/slurm/sackd
+    repository: quay.io/slinky-on-openshift/sackd
     #
     # -- (string)
     # Set the image tag to use.
-    tag: 0.0.2
+    tag: '24.11'
   #
   # -- (object)
   # Set container resource requests and limits for Kubernetes Pod scheduling.
@@ -261,11 +261,11 @@ controller:
     #
     # -- (string)
     # Set the image repository to use.
-    repository: image-registry.openshift-image-registry.svc:5000/slurm/slurmctld
+    repository: quay.io/slinky-on-openshift/slurmctld
     #
     # -- (string)
     # Set the image tag to use.
-    tag: 0.0.2
+    tag: '24.11'
   #
   # -- (string)
   # Set the priority class to use.
@@ -354,17 +354,17 @@ login:
     #
     # -- (string)
     # Set the image repository to use.
-    repository: image-registry.openshift-image-registry.svc:5000/slurm/login
+    repository: quay.io/slinky-on-openshift/login
     #
     # -- (string)
     # Set the image tag to use.
-    tag: 0.0.2
+    tag: '24.11'
   #
   # -- (object)
   # The restapi service configuration.
   # Ref: https://kubernetes.io/docs/concepts/services-networking/service/
   service:
-    type: LoadBalancer
+    type: NodePort
     # externalIPs: []
     # externalName: my.login.example.com
   #
@@ -504,12 +504,12 @@ compute:
     #
     # -- (string)
     # Set the image repository to use.
-    repository: image-registry.openshift-image-registry.svc:5000/slurm/slurmd-custom
+    repository: quay.io/slinky-on-openshift/slurmd-custom
     #
     # -- (string)
     # Set the image tag to use.
     # @default -- The Release appVersion.
-    tag: 0.0.2
+    tag: '24.11'
   #
   # -- (list)
   # Slurm NodeSets by object list.
@@ -740,11 +740,11 @@ accounting:
     #
     # -- (string)
     # Set the image repository to use.
-    repository: image-registry.openshift-image-registry.svc:5000/slurm/slurmdbd
+    repository: quay.io/slinky-on-openshift/slurmdbd
     #
     # -- (string)
     # Set the image tag to use.
-    tag: 0.0.2
+    tag: '24.11'
   #
   # -- (object)
   # Set affinity for Kubernetes Pod scheduling.
@@ -890,11 +890,11 @@ restapi:
     #
     # -- (string)
     # Set the image repository to use.
-    repository: image-registry.openshift-image-registry.svc:5000/slurm/slurmrestd
+    repository: quay.io/slinky-on-openshift/slurmrestd
     #
     # -- (string)
     # Set the image tag to use.
-    tag: 0.0.2
+    tag: '24.11'
   #
   # -- (object)
   # The restapi service configuration.
