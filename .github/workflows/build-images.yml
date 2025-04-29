@@ -2,6 +2,7 @@ name: Build slurm-operator container images
 
 env:
   REPO: quay.io/slinky-on-openshift
+  SLURM_VERSION: 24.11
 
 on:
   push:
@@ -52,54 +53,61 @@ jobs:
     - name: Build slurmd
       run: |
         docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
-          --tag ${{ env.REPO }}/slurmd:24.11 \
+          --tag ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }} \
           --target=slurmd \
-          upstream/containers/schedmd/slurm/24.11/rockylinux9
-        docker push ${{ env.REPO }}/slurmd:24.11
-
-    - name: Build slurmd-extra
-      run: |
-        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/slurmd:24.11 \
-          --tag ${{ env.REPO }}/slurmd-extra:24.11 \
-          images/slurmd
-        docker push ${{ env.REPO }}/slurmd-extra:24.11
+          upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
+        docker push ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }}
 
     - name: Build slurmctld
       run: |
         docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
-          --tag ${{ env.REPO }}/slurmctld:24.11 \
+          --tag ${{ env.REPO }}/slurmctld:${{ env.SLURM_VERSION }} \
           --target=slurmctld \
-          upstream/containers/schedmd/slurm/24.11/rockylinux9
-        docker push ${{ env.REPO }}/slurmctld:24.11
+          upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
+        docker push ${{ env.REPO }}/slurmctld:${{ env.SLURM_VERSION }}
 
     - name: Build slurmrestd
       run: |
         docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
-          --tag ${{ env.REPO }}/slurmrestd:24.11 \
+          --tag ${{ env.REPO }}/slurmrestd:${{ env.SLURM_VERSION }} \
           --target=slurmrestd \
-          upstream/containers/schedmd/slurm/24.11/rockylinux9
-        docker push ${{ env.REPO }}/slurmrestd:24.11
+          upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
+        docker push ${{ env.REPO }}/slurmrestd:${{ env.SLURM_VERSION }}
 
     - name: Build slurmdbd
       run: |
         docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
-          --tag ${{ env.REPO }}/slurmdbd:24.11 \
+          --tag ${{ env.REPO }}/slurmdbd:${{ env.SLURM_VERSION }} \
           --target=slurmdbd \
-          upstream/containers/schedmd/slurm/24.11/rockylinux9
-        docker push ${{ env.REPO }}/slurmdbd:24.11
+          upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
+        docker push ${{ env.REPO }}/slurmdbd:${{ env.SLURM_VERSION }}
 
     - name: Build sackd
       run: |
         docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
-          --tag ${{ env.REPO }}/sackd:24.11 \
+          --tag ${{ env.REPO }}/sackd:${{ env.SLURM_VERSION }} \
           --target=sackd \
-          upstream/containers/schedmd/slurm/24.11/rockylinux9
-        docker push ${{ env.REPO }}/sackd:24.11
+          upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
+        docker push ${{ env.REPO }}/sackd:${{ env.SLURM_VERSION }}
 
     - name: Build login
       run: |
         docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
-          --tag ${{ env.REPO }}/login:24.11 \
+          --tag ${{ env.REPO }}/login:${{ env.SLURM_VERSION }} \
           --target=login \
-          upstream/containers/schedmd/slurm/24.11/rockylinux9
-        docker push ${{ env.REPO }}/login:24.11
+          upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
+        docker push ${{ env.REPO }}/login:${{ env.SLURM_VERSION }}
+
+    - name: Build slurmd-extra
+      run: |
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }} \
+          --tag ${{ env.REPO }}/slurmd-extra:${{ env.SLURM_VERSION }} \
+          images/slurmd
+        docker push ${{ env.REPO }}/slurmd-extra:${{ env.SLURM_VERSION }}
+
+    - name: Build login-extra
+      run: |
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/login:${{ env.SLURM_VERSION }} \
+          --tag ${{ env.REPO }}/login-extra:${{ env.SLURM_VERSION }} \
+          images/login
+        docker push ${{ env.REPO }}/login-extra:${{ env.SLURM_VERSION }}
