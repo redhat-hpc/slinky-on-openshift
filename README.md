@@ -56,7 +56,9 @@ oc apply -f extras/ssh-route.yaml
 oc get route -n slurm
 ```
 
-Using SSH client and openssl, SSH through OpenShift Route proxy to the login pod
+Using SSH client and openssl, SSH through OpenShift Route proxy to the login pod. The self signed certificate that openssl complains about is the certificate of the terminating proxy running on the login pod and is fine to disregard.
+
+Specifically, we are not authenticating the connection between the OpenShift router and the backend login pod inside the OpenShift cluster.
 
 ```
 ssh -o ProxyCommand="openssl s_client -verify_quiet -quiet -connect <route name>:443 " user1@127.0.0.1
