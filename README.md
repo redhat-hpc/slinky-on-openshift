@@ -41,6 +41,7 @@ Install the Slurm Operator deployment and then deploy Slurm
 ```
 helm upgrade -i -n slurm slurm-operator slurm-operator/helm/slurm-operator/ --values helm/values-operator.yaml
 
+helm dependency build slurm-operator/helm/slurm/
 helm upgrade -i -n slurm slurm slurm-operator/helm/slurm/ --values helm/values-slurm.yaml
 ```
 
