@@ -1,0 +1,25 @@
+{{- /*
+SPDX-FileCopyrightText: Copyright (C) SchedMD LLC.
+SPDX-License-Identifier: Apache-2.0
+*/}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "slurm-operator.name" . }}-test
+  namespace: {{ include "slurm-operator.namespace" . }}
+  labels:
+    {{- include "slurm-operator.operator.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+spec:
+  containers:
+  - name: operatortest
+    image: busybox
+    command:
+    - /bin/sh
+    - -exc
+    - |
+      wget -q -O- http://{{ include "slurm-operator.name" . }}.{{ include "slurm-operator.namespace" . }}:8081/healthz | grep ok
+      wget -q -O- http://{{ include "slurm-operator.name" . }}.{{ include "slurm-operator.namespace" . }}:8081/readyz | grep ok
+  restartPolicy: Never

@@ -1,0 +1,96 @@
+{{- /*
+SPDX-FileCopyrightText: Copyright (C) SchedMD LLC.
+SPDX-License-Identifier: Apache-2.0
+*/}}
+
+{{- $name := printf "slurm-test" }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "slurm.namespace" . }}
+  labels:
+    {{- include "slurm.controller.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+spec:
+  dnsConfig:
+    {{- include "slurm.dnsConfig" $ | nindent 4 }}
+  securityContext:
+    sysctls:
+      - name: net.ipv4.ping_group_range
+        value: "{{ include "slurm.uid" . }} {{ include "slurm.uid" . }}"
+  restartPolicy: Never
+  initContainers:
+    - name: init
+      image: {{ include "slurm.authcred.imageRef" . }}
+      imagePullPolicy: {{ .Values.authcred.imagePullPolicy | default (include "slurm.imagePullPolicy" .) }}
+      {{- with .Values.authcred.resources }}
+      resources:
+        {{- toYaml . | nindent 12 }}
+      {{- end }}{{- /* with .Values.authcred.resources */}}
+      env:
+        - name: SLURM_USER
+          value: {{ include "slurm.user" . }}
+      command:
+        - bash
+        - -c
+        - |
+          {{- range $.Files.Lines "scripts/init.sh" }}
+          {{ . }}
+          {{- end }}
+      volumeMounts:
+        {{- include "slurm.init.volumeMounts" . | nindent 8 }}
+    - name: waitctl
+      image: {{ include "slurm.authcred.imageRef" . }}
+      imagePullPolicy: {{ .Values.authcred.imagePullPolicy | default (include "slurm.imagePullPolicy" .) }}
+      {{- with .Values.authcred.resources }}
+      resources:
+        {{- toYaml . | nindent 12 }}
+      {{- end }}{{- /* with .Values.authcred.resources */}}
+      securityContext:
+        {{- include "slurm.securityContext" $ | nindent 8 }}
+      env:
+        - name: HOST
+          value: {{ include "slurm.controller.name" $ }}
+      command:
+        - bash
+        - -c
+        - |
+          {{- range .Files.Lines "scripts/wait-ping.sh" }}
+          {{ . }}
+          {{- end }}{{- /* range .Files.Lines "scripts/wait-ping.sh" */}}
+  containers:
+    - name: controllertest
+      image: {{ include "slurm.authcred.imageRef" . }}
+      imagePullPolicy: {{ .Values.authcred.imagePullPolicy | default (include "slurm.imagePullPolicy" .) }}
+      {{- with .Values.authcred.resources }}
+      resources:
+        {{- toYaml . | nindent 12 }}
+      {{- end }}{{- /* with .Values.authcred.resources */}}
+      securityContext:
+        {{- include "slurm.securityContext" $ | nindent 8 }}
+      command:
+      - /bin/sh
+      - -exc
+      - |
+        sackd
+        scontrol ping
+    {{- if .Values.accounting.enabled }}
+        sacctmgr ping
+    {{- end }}{{- /* if .Values.accounting.enabled */}}
+      volumeMounts:
+        {{- include "slurm.volumeMounts" . | nindent 8 }}
+  volumes:
+    {{- include "slurm.volumes" . | nindent 4 }}
+    - name: slurm-config
+      projected:
+        defaultMode: 0600
+        sources:
+          - configMap:
+              name: {{ include "slurm.configMapName" . }}
+          - secret:
+              name: {{ include "slurm.auth.secretName" . }}
+          - secret:
+              name: {{ include "slurm.jwt.hs256.secretName" . }}

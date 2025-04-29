@@ -1,0 +1,28 @@
+{{- /*
+SPDX-FileCopyrightText: Copyright (C) SchedMD LLC.
+SPDX-License-Identifier: Apache-2.0
+*/}}
+
+{{- if .Values.login.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "slurm.login.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "slurm.login.selectorLabels" . | nindent 4 }}
+spec:
+  selector:
+    {{ include "slurm.login.selectorLabels" . | nindent 4 }}
+  {{- with .Values.login.service }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}{{- /* with .Values.login.service */}}
+  ports:
+    - name: ssh
+      protocol: TCP
+      port: {{ .Values.login.servicePort }}
+      targetPort: 22
+      {{- if eq (.Values.login.service.type | default "ClusterIP" | lower) ("NodePort" | lower) }}
+      nodePort: {{ .Values.login.serviceNodePort }}
+      {{- end }}{{- /* if eq (.Values.login.service.type | default "ClusterIP" | lower) ("NodePort" | lower) */}}
+{{- end }}{{- /* if .Values.login.enabled */}}
