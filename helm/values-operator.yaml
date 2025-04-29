@@ -20,8 +20,7 @@ namespaceOverride: ""
 # -- (list)
 # Sets the image pull secrets.
 # Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-imagePullSecrets:
-  []
+imagePullSecrets: []
   # - name: regcred
 
 #
@@ -74,11 +73,15 @@ operator:
   # Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
   affinity: {}
   #
+  # -- (list)
+  # Configure pod tolerations.
+  # Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+  tolerations: []
+  #
   # -- (object)
   # Set container resource requests and limits for Kubernetes Pod scheduling.
   # Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-requests-and-limits-of-pod-and-container
-  resources:
-    {}
+  resources: {}
     # requests:
     #   cpu: 1
     #   memory: 1Gi
@@ -142,11 +145,15 @@ webhook:
   # Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
   affinity: {}
   #
+  # -- (list)
+  # Configure pod tolerations.
+  # Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+  tolerations: []
+  #
   # -- (object)
   # Set container resource requests and limits for Kubernetes Pod scheduling.
   # Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-requests-and-limits-of-pod-and-container
-  resources:
-    {}
+  resources: {}
     # requests:
     #   cpu: 1
     #   memory: 1Gi

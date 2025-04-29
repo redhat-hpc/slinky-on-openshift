@@ -27,7 +27,7 @@ Create the namespace and add a custom SCC to all service accounts in the namespa
 
 ```
 oc create ns slurm
-oc create -f scc.yaml
+oc create -f extras/scc.yaml
 ```
 
 Install glauth for simulating LDAP environment

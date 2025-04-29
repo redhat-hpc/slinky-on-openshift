@@ -74,76 +74,35 @@ slurm:
   # Extra slurmdbd configuration lines to append to `slurmdbd.conf`.
   # WARNING: Values can override existing ones.
   # Ref: https://slurm.schedmd.com/slurmdbd.conf.html
-  extraSlurmdbdConf:
-    CommitDelay: 1
+  extraSlurmdbdConf: {}
+    # CommitDelay: 1
     ### LOGGING ###
-    DebugLevel: info
-    DebugFlags: []
-    LogTimeFormat:
-      - iso8601_ms
-      - format_stderr
-    # PLUGINS & PARAMETERS
-    CommunicationParameters: []
-    HashPlugin: hash/k12
-    ### ARCHIVE ###
-    ArchiveDir: /tmp
-    #ArchiveEvents: YES
-    #ArchiveJobs: YES
-    #ArchiveResvs: YES
-    #ArchiveSteps: NO
-    #ArchiveSuspend: NO
-    #ArchiveTXN: NO
-    #ArchiveUsage: NO
+    # DebugLevel: debug2
+    # DebugFlags: []
     ### PURGE ###
-    #PurgeEventAfter: 12month
-    #PurgeJobAfter: 12month
-    #PurgeResvAfter: 2month
-    #PurgeStepAfter: 2month
-    #PurgeSuspendAfter: 1month
-    #PurgeTXNAfter: 12month
-    #PurgeUsageAfter: 12month
+    # PurgeEventAfter: 12month
+    # PurgeJobAfter: 12month
+    # PurgeResvAfter: 2month
+    # PurgeStepAfter: 2month
+    # PurgeSuspendAfter: 1month
+    # PurgeTXNAfter: 12month
+    # PurgeUsageAfter: 12month
   #
   # -- (map[string]string | map[string][]string)
   # Extra slurm configuration lines to append to `slurm.conf`, represetned as a string or a map.
   # WARNING: Values can override existing ones.
   # Ref: https://slurm.schedmd.com/slurm.conf.html
-  extraSlurmConf:
-    MaxNodeCount: 1024
-    ReturnToService: 2
-    EnforcePartLimits: "NO"
-    ### PLUGINS & PARAMETERS ###
-    AuthInfo:
-      - use_client_ids
-    SchedulerType: sched/backfill
-    SchedulerParameters:
-      - defer_batch
-    SelectType: select/cons_tres
-    SelectTypeParameters:
-      - CR_Core_Memory
-    SlurmctldParameters:
-      - enable_configless
-      - enable_stepmgr
-    SlurmdParameters:
-      - contain_spank
-    CommunicationParameters:
-      - block_null_hash
-    LaunchParameters:
-      - enable_nss_slurm
-      - use_interactive_step
-      - ulimit_pam_adopt
-    ReconfigFlags:
-      - KeepPartInfo
-      - KeepPartState
-    PrologFlags: Contain
-    HashPlugin: hash/k12
+  extraSlurmConf: {}
+    # MinJobAge: 2
+    # MaxNodeCount: 1024
     ### LOGGING ###
-    SlurmctldDebug: info
-    SlurmSchedLogLevel: 1
-    SlurmdDebug: info
-    DebugFlags: []
-    LogTimeFormat:
-      - iso8601_ms
-      - format_stderr
+    # SlurmctldDebug: debug2
+    # SlurmSchedLogLevel: 1
+    # SlurmdDebug: debug2
+    # DebugFlags: []
+    ### PLUGINS & PARAMETERS ###
+    # SchedulerParameters:
+    #   - defer_batch
   #
   # -- (map[string]string)
   # Optional raw Slurm configuration files, as a map.
@@ -177,8 +136,9 @@ slurm:
   # Ref: https://slurm.schedmd.com/prolog_epilog.html
   # Ref: https://en.wikipedia.org/wiki/Shebang_(Unix)
   prologScripts: {}
-    # empty: |
+    # 00-empty.sh: |
     #   #!/usr/bin/env bash
+    #   set -euo pipefail
     #   exit 0
   #
   # -- (map[string]string)
@@ -189,28 +149,11 @@ slurm:
   # Ref: https://slurm.schedmd.com/prolog_epilog.html
   # Ref: https://en.wikipedia.org/wiki/Shebang_(Unix)
   epilogScripts: {}
-    # empty: |
+    # 00-empty.sh: |
     #   #!/usr/bin/env bash
+    #   set -euo pipefail
     #   exit 0
 
-#
-# Shared configurations.
-sharedConfig:
-  #
-  # -- (list)
-  # List of volumes to be mounted on each Login and NodeSet pods.
-  # Ref: https://kubernetes.io/docs/concepts/storage/volumes/
-  volumes: []
-    # - name: nfs-home
-    #   mountPath: /home
-    #   persistentVolumeClaim:
-    #     claimName: nfs-home
-    # - name: nfs-data
-    #   mountPath: /mnt/data
-    #   persistentVolumeClaim:
-    #     claimName: nfs-data
-
-#
 # Slurm authcred (sackd) configurations.
 authcred:
   #
@@ -244,14 +187,6 @@ authcred:
 # Slurm controller (slurmctld) configurations.
 controller:
   #
-  # -- (bool)
-  # Enables the controller node.
-  enabled: true
-  #
-  # -- (integer)
-  # Set the number of replicas to deploy.
-  replicas: 1
-  #
   # -- (string)
   # Set the image pull policy.
   imagePullPolicy: IfNotPresent
@@ -267,10 +202,27 @@ controller:
     # Set the image tag to use.
     tag: '24.11'
   #
+  # -- (object)
+  # The controller service configuration.
+  # Ref: https://kubernetes.io/docs/concepts/services-networking/service/
+  service: {}
+    # type: LoadBalancer
+    # externalIPs: []
+    # externalName: my.slurmctld.example.com
+  #
+  # -- (integer)
+  # The external service port number.
+  servicePort: 6817
+  #
+  # -- (integer)
+  # The external service node port number.
+  # Ignored unless `service.type == NodePort`.
+  serviceNodePort: 36817
+  #
   # -- (string)
   # Set the priority class to use.
   # Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#priorityclass
-  priorityClassName:
+  priorityClassName: ""
   #
   # -- (object)
   # Set affinity for Kubernetes Pod scheduling.
@@ -316,7 +268,7 @@ controller:
     #
     # -- (string)
     # Create a `PersistentVolumeClaim` with this storage class.
-    storageClass: "gp3-csi"
+    storageClass: null
     #
     # -- (list)
     # Create a `PersistentVolumeClaim` with these access modes.
@@ -361,7 +313,7 @@ login:
     tag: '24.11'
   #
   # -- (object)
-  # The restapi service configuration.
+  # The login service configuration.
   # Ref: https://kubernetes.io/docs/concepts/services-networking/service/
   service:
     type: NodePort
@@ -386,8 +338,11 @@ login:
   # The `/etc/ssh/sshd_config` file to use, represented as a map.
   # Ref: https://man.openbsd.org/sshd_config
   sshdConfig:
+    # LogLevel: DEBUG3
     Include: "/etc/ssh/sshd_config.d/*.conf"
-    # Subsystem: sftp internal-sftp
+    X11Forwarding: "yes"
+    UsePAM: "yes"
+    Subsystem: sftp /usr/libexec/openssh/sftp-server
   #
   # The `/etc/sssd/sssd.conf` represented by as a map.
   sssdConf:
@@ -433,34 +388,24 @@ login:
     pam: {}
       # debug_level: 9
   #
-  # --(map)
-  # The `/etc/nsswitch.conf` file to use, represented as a map.
-  # Ref: https://man7.org/linux/man-pages/man5/nsswitch.conf.5.html
-  nsswitchConf:
-    passwd: db files sss
-    group: db files sss
-    shadow: db files sss
-    gshadow: files
-    sudoers: files sss
-    hosts: files dns myhostname
-    networks: files
-    protocols: db files
-    services: db files sss
-    ethers: db files
-    rpc: db files
-    netgroup: db files sss
-    automount: files sss
-  #
-  # -- (list)
-  # List of volumes to be mounted on each login pod.
+  # --(list)
+  # List of volume mounts.
   # Ref: https://kubernetes.io/docs/concepts/storage/volumes/
-  volumes:
-    - name: site-homeareas
-      mountPath: /home
-      persistentVolumeClaim:
-        claimName: user-homearea
+  extraVolumeMounts: []
+    # - name: nfs-home
+    #   mountPath: /home
     # - name: nfs-data
     #   mountPath: /mnt/data
+  #
+  # --(list)
+  # Define list of pod volumes.
+  # Ref: https://kubernetes.io/docs/concepts/storage/volumes/
+  extraVolumes: []
+    # - name: nfs-home
+    #   nfs:
+    #     server: nfs-server.example.com
+    #     path: /exports/home/
+    # - name: nfs-data
     #   persistentVolumeClaim:
     #     claimName: nfs-data
   #
@@ -508,7 +453,6 @@ compute:
     #
     # -- (string)
     # Set the image tag to use.
-    # @default -- The Release appVersion.
     tag: '24.11'
   #
   # -- (list)
@@ -644,22 +588,24 @@ compute:
         #       requests:
         #         storage: 1Gi
       #
-      # -- (list)
-      # List of volumes to be mounted on each NodeSet pod.
+      # --(list)
+      # List of volume mounts.
       # Ref: https://kubernetes.io/docs/concepts/storage/volumes/
-      volumes:
-        - name: home
-          mountPath: /home
-          persistentVolumeClaim:
-            claimName: user-homearea
-        # - name: nfs-bin
-        #   mountPath: /usr/local/bin
-        #   nfs:
-        #     server: nfs-server.example.com
-        #     path: /opt/bin
-        #     readOnly: true
+      extraVolumeMounts: []
+        # - name: nfs-home
+        #   mountPath: /home
         # - name: nfs-data
         #   mountPath: /mnt/data
+      #
+      # --(list)
+      # Define list of pod volumes.
+      # Ref: https://kubernetes.io/docs/concepts/storage/volumes/
+      extraVolumes: []
+        # - name: nfs-home
+        #   nfs:
+        #     server: nfs-server.example.com
+        #     path: /exports/home/
+        # - name: nfs-data
         #   persistentVolumeClaim:
         #     claimName: nfs-data
       #
@@ -726,10 +672,6 @@ accounting:
   # -- (bool)
   # Enables accounting services.
   enabled: true
-  #
-  # -- (integer)
-  # Set the number of replicas to deploy.
-  replicas: 1
   #
   # -- (string)
   # Set the image pull policy.
@@ -853,7 +795,7 @@ mariadb:
     persistence:
       enabled: true
       existingClaim: ""
-      storageClass: gp3-csi
+      storageClass: null
       labels: {}
       annotations: {}
       accessModes:
