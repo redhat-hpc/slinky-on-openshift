@@ -1,0 +1,99 @@
+---
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+
+stages:
+  - build
+  - release
+
+default:
+  image: docker:27.3.0
+  services:
+    - docker:27.3.0-rc.1-dind
+  before_script:
+    - docker info
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+
+variables:
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: /certs
+  FF_SCRIPT_SECTIONS: true
+
+.slurm:
+  variables:
+    DOCKER_BAKE_REGISTRY: $CI_REGISTRY_IMAGE
+  parallel:
+    matrix:
+      - VERSION:
+          - master
+          - '24.11'
+          - '24.05'
+        FLAVOR:
+          - rockylinux9
+          - ubuntu24.04
+
+.slurm-release:
+  variables:
+    DOCKER_SOURCE_REGISTRY: $CI_REGISTRY_IMAGE
+    DOCKER_BAKE_REGISTRY: $DOCKER_REGISTRY
+  parallel:
+    matrix:
+      - VERSION:
+          - '24.11'
+          - '24.05'
+        FLAVOR:
+          - rockylinux9
+          - ubuntu24.04
+  before_script:
+    - docker info
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - |
+      if [ -z $DOCKER_REGISTRY_PASSWORD ] || [ -z $DOCKER_REGISTRY ] || [ -z $DOCKER_REGISTRY_USER ]; then
+        echo "Runner lacks login info. Either environment variables are not defined, or runner is on an unprotected branch/tag.";
+        exit 1;
+      fi
+    - echo "$DOCKER_REGISTRY_PASSWORD" | docker login $DOCKER_REGISTRY -u $DOCKER_REGISTRY_USER --password-stdin
+
+build:
+  stage: build
+  extends: .slurm
+  script:
+    - export BAKE_TARGET="$(printf "%s" "$(echo "$FLAVOR" | sed 's/[[:punct:]]//g')")"
+    - echo "BAKE_TARGET=$BAKE_TARGET"
+    - cd ./schedmd/slurm/$VERSION/
+    - docker buildx bake --print $BAKE_TARGET
+    - docker buildx bake --progress=plain $BAKE_TARGET
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - schedmd/slurm/$VERSION/docker-bake.hcl
+        - schedmd/slurm/$VERSION/$FLAVOR/*
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $VERSION == 'master'
+      changes:
+        - schedmd/slurm/$VERSION/docker-bake.hcl
+        - schedmd/slurm/$VERSION/$FLAVOR/*
+      allow_failure: true
+
+release:
+  stage: release
+  extends:
+    - .slurm
+    - .slurm-release
+  script:
+    - export BAKE_TARGET="$(printf "%s" "$(echo "$FLAVOR" | sed 's/[[:punct:]]//g')")"
+    - echo "BAKE_TARGET=$BAKE_TARGET"
+    - cd ./schedmd/slurm/$VERSION/
+    - docker buildx bake --print $BAKE_TARGET
+    - docker buildx bake --progress=plain $BAKE_TARGET
+    - docker buildx bake --progress=plain --push $BAKE_TARGET
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - schedmd/slurm/$VERSION/docker-bake.hcl
+        - schedmd/slurm/$VERSION/$FLAVOR/*
