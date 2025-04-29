@@ -1,0 +1,143 @@
+{{- /*
+SPDX-FileCopyrightText: Copyright (C) SchedMD LLC.
+SPDX-License-Identifier: Apache-2.0
+*/}}
+
+{{- if .Values.operator.enabled }}
+{{- if .Values.operator.serviceAccount.create }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "slurm-operator.operator.serviceAccountName" . }}
+  namespace: {{ include "slurm-operator.namespace" . }}
+  labels:
+    {{- include "slurm-operator.operator.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "slurm-operator.operator.serviceAccountName" . }}
+  namespace: {{ include "slurm-operator.namespace" . }}
+rules:
+- apiGroups:
+  - slinky.slurm.net
+  resources:
+  - clusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - slinky.slurm.net
+  resources:
+  - clusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - slinky.slurm.net
+  resources:
+  - clusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - slinky.slurm.net
+  resources:
+  - nodesets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - slinky.slurm.net
+  resources:
+  - nodesets/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - slinky.slurm.net
+  resources:
+  - nodesets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - controllerrevisions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  - events
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "slurm-operator.operator.serviceAccountName" . }}
+  labels:
+    {{- include "slurm-operator.operator.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "slurm-operator.operator.serviceAccountName" . }}
+  namespace: {{ include "slurm-operator.namespace" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "slurm-operator.operator.serviceAccountName" . }}
+{{- end }}{{- /* if .Values.operator.serviceAccount.create */}}
+{{- end }}{{- /* if .Values.operator.enabled */}}

@@ -1,0 +1,61 @@
+{{- /*
+SPDX-FileCopyrightText: Copyright (C) SchedMD LLC.
+SPDX-License-Identifier: Apache-2.0
+*/}}
+
+{{- if .Values.webhook.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "slurm-operator.webhook.name" . }}
+  namespace: {{ include "slurm-operator.namespace" . }}
+  labels:
+    {{- include "slurm-operator.webhook.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "slurm-operator.webhook.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        {{- include "slurm-operator.webhook.labels" . | nindent 8 }}
+    spec:
+      hostname: {{ include "slurm-operator.webhook.name" . }}
+      priorityClassName: {{ default "" .Values.priorityClassName }}
+      serviceAccountName: {{ include "slurm-operator.webhook.serviceAccountName" . }}
+      {{- include "slurm-operator.imagePullSecrets" . | nindent 6 }}
+      containers:
+        - name: webhook
+          image: {{ include "slurm-operator.webhook.imageRef" . }}
+          imagePullPolicy: {{ include "slurm-operator.imagePullPolicy" . }}
+          args:
+            - --zap-log-level
+            - {{ default "info" .Values.webhook.logLevel | quote }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+          volumeMounts:
+            - name: certificates
+              mountPath: /tmp/k8s-webhook-server/serving-certs/
+              readOnly: true
+      {{- with .Values.webhook.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with .Values.webhook.tolerations */}}
+      volumes:
+        - name: certificates
+          secret:
+            defaultMode: 420
+            secretName: {{ .Values.certManager.secretName }}
+{{- end }}{{- /* if .Values.webhook.enabled */}}

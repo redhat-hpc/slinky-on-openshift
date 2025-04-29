@@ -1,0 +1,49 @@
+{{- /*
+SPDX-FileCopyrightText: Copyright (C) SchedMD LLC.
+SPDX-License-Identifier: Apache-2.0
+*/}}
+
+{{- if and .Values.accounting.enabled .Values.mariadb.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "slurm.accounting.config.name" . }}
+  namespace: {{ include "slurm.namespace" . }}
+  labels:
+    {{- include "slurm.accounting.labels" . | nindent 4 }}
+data:
+  slurmdbd.conf: |
+    #
+    ### GENERAL ###
+    DbdHost={{- printf "%s-0" (include "slurm.accounting.name" $) }}
+    DbdPort={{- include "slurm.accounting.port" . }}
+    PidFile=/var/run/slurmdbd.pid
+    SlurmUser={{- include "slurm.user" . }}
+    #
+    ### PLUGINS & PARAMETERS ###
+    AuthType=auth/slurm
+    AuthAltTypes=auth/jwt
+    AuthAltParameters=jwt_key={{- include "slurm.jwt.hs256.fullPath" . }}
+    AuthInfo=use_client_ids
+    #
+    ### STORAGE ###
+    StorageType=accounting_storage/mysql
+    StorageHost={{- template "mariadb.primary.fullname" .Subcharts.mariadb }}
+    StorageUser={{- .Values.mariadb.auth.username }}
+    StoragePass=$MARIADB_PASSWORD
+    StorageLoc={{- .Values.mariadb.auth.database }}
+    StoragePort={{- default .Values.mariadb.primary.service.ports.mysql 3306 }}
+    #
+    ### LOGGING ###
+    LogFile=/dev/null
+    LogTimeFormat=iso8601_ms,format_stderr
+    {{- with .Values.slurm.extraSlurmdbdConf }}
+    #
+    ### EXTRA CONFIG ###
+    {{- range $key, $val := . }}
+    {{- if $val }}
+    {{ $key }}={{ $val | join "," }}
+    {{- end }}{{- /* if $val */}}
+    {{- end }}{{- /* range $key, $val := . */}}
+    {{- end }}{{- /* with .Values.slurm.extraSlurmdbdConf */}}
+{{- end }}
