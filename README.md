@@ -1,6 +1,8 @@
 # slinky-on-openshift
 Pattern for running the [Slurm operator](https://github.com/SlinkyProject/slurm-operator) on OpenShift
 
+Images are built on top of CentOS Stream and are available on [quay.io](https://quay.io/organization/slinky-on-openshift)
+
 ## Prerequisites
 
 ### Shared filesystem
