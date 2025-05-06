@@ -316,7 +316,7 @@ login:
   # The login service configuration.
   # Ref: https://kubernetes.io/docs/concepts/services-networking/service/
   service:
-    type: NodePort
+    type: ClusterIP
     # externalIPs: []
     # externalName: my.login.example.com
   #
