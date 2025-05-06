@@ -13,9 +13,13 @@ if [ ! -d spack ]; then
 fi
 echo "source ~/spack/share/spack/setup-env.sh" > ~/.bash_profile
 
-source ~/.bashrc
+source ~/.bash_profile
 
+echo "spack compiler find"
 spack compiler find
+echo "spack external find slurm"
 spack external find slurm
+echo "spack install openmpi"
 spack install openmpi schedulers=slurm
+echo "spack install hpl"
 spack install hpl
