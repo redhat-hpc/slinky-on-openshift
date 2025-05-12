@@ -14,4 +14,6 @@ eval `spack load --sh hpl`
 #mpirun -np 16 --map-by node:PE=4 --bind-to core xhpl
 #mpirun -np 16 --display-allocation xhpl
 
+echo "start $(date)"
 mpirun -np 36 --map-by node xhpl
+echo "end $(date)"

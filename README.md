@@ -74,7 +74,7 @@ Using SSH client and openssl, SSH through OpenShift Route proxy to the login pod
 Specifically, we are not authenticating the connection between the OpenShift router and the backend login pod inside the OpenShift cluster.
 
 ```
-ssh -o ProxyCommand="openssl s_client -verify_quiet -quiet -connect %h:443 " user1@<route_url>
+ssh -o ProxyCommand="openssl s_client -quiet -connect %h:443 " user1@<route_url>
 ```
 
 ## Enable Autoscaling (optional)
