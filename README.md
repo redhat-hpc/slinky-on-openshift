@@ -32,6 +32,10 @@ oc create ns slurm
 oc create -f extras/scc.yaml
 ```
 
+
+> [!IMPORTANT]
+> By default, glauth configuration has commented out default user/password that are easy to guess, modify to suit your use case
+
 Install glauth for simulating LDAP environment
 
 ```
@@ -47,9 +51,16 @@ helm dependency build upstream/slurm-operator/helm/slurm/
 helm upgrade -i -n slurm slurm upstream/slurm-operator/helm/slurm/ --values helm/values-slurm.yaml
 ```
 
-### Add OpenShift Route
+### Add OpenShift Route for SSH
+
+> [!CAUTION]
+> Exposing the SSH server in the login pod with easy to guess usernames and passwords is DANGEROUS.
+> If you uncommented the simple user1-6 users in glauth configuration then you may be opening up an attack vector to your cluster.
 
 Sometimes it is difficult to open up ports on the cluster for a LoadBalancer or NodePort service. Alternatively we can use the OpenShift Router (L4/L7 LB) to proxy SSH through a TLS tunnel.
+
+> [!NOTE]
+> Using TLS to tunnel traffic through the OpenShift Router does reduce the attach surface but it does not remove the threat.
 
 Apply the Route and Service:
 
