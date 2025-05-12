@@ -373,6 +373,8 @@ login:
 
         ldap_default_bind_dn: cn=serviceuser,dc=example,dc=com
         ldap_default_authtok: mysecret
+
+        ldap_access_filter: (memberOf=ou=users,ou=groups,dc=example,dc=com)
     #
     # -- (map)
     # The `/etc/sssd/sssd.conf` [nss] section, represented as a map.
