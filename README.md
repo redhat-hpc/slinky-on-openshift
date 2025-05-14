@@ -51,6 +51,22 @@ helm dependency build upstream/slurm-operator/helm/slurm/
 helm upgrade -i -n slurm slurm upstream/slurm-operator/helm/slurm/ --values helm/values-slurm.yaml
 ```
 
+### Testing with shared homearea
+
+> [!NOTE]
+> This deploys a PVC with cephfs (which requires OpenShift Data Foundations being deployed and running in the cluster) which may not be for all use cases.
+
+We can deploy a shared filesystem with cephfs and mount it on the login and compute pods:
+
+```
+oc apply -f extras/homearea.yaml
+helm upgrade -i -n slurm slurm upstream/slurm-operator/helm/slurm/ --values helm/values-slurm-with-homearea.yaml
+```
+
+When used with SSH (below), the homeareas should be created automatically on successful login.
+
+Other shared homeareas can be used as well, such as NFS which works great if you only have RWO block access: https://github.com/naps-product-sa/openshift-batch/tree/main/storage/simple-nfs
+
 ### Add OpenShift Route for SSH
 
 > [!CAUTION]
