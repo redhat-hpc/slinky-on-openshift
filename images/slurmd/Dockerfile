@@ -8,6 +8,6 @@ dnf -q makecache --refresh
 # https://spack.readthedocs.io/en/latest/getting_started.html
 dnf -q -y group install "Development Tools"
 dnf -q -y install libtool gcc-gfortran \
-    python3 procps-ng git vim-enhanced hostname man-db
+    python3 procps-ng git vim-enhanced hostname man-db hwloc
 dnf clean all
 EOR

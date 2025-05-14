@@ -1,0 +1,10 @@
+apiVersion: mellanox.com/v1alpha1
+kind: MacvlanNetwork
+metadata:
+  name: rdma-cpuonly-net
+spec:
+  ipam: '{"type": "whereabouts", "range": "192.168.3.0/24", "gateway": "192.168.3.1"}'
+  master: enp73s0f1np1
+  mode: bridge
+  mtu: 9000
+  networkNamespace: slurm
