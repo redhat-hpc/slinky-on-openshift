@@ -5,7 +5,8 @@ RUN <<EOR
 # Install socat for https
 set -xeuo pipefail
 dnf -q makecache --refresh
-dnf -q -y install socat oddjob oddjob-mkhomedir
+dnf -q -y install socat oddjob oddjob-mkhomedir \
+    python3 procps-ng git vim-enhanced hostname man-db hwloc iproute
 dnf clean all
 
 mv /etc/supervisor/supervisord.conf /etc/supervisord.d/slurm.conf
