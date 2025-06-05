@@ -15,7 +15,9 @@ This creates a 100GB PVC called `user-homearea` and a deployment to manage the f
 oc apply -f extras/homearea.yaml
 ```
 
-### Building images
+### Building images (optional)
+
+By default we can use the images built by GH Actions and hosted on quay.io/slinky-on-openshift
 
 Using OpenShift Pipelines
 
