@@ -498,8 +498,8 @@ compute:
       # Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-requests-and-limits-of-pod-and-container
       resources:
         limits:
-          cpu: 6
-          memory: 8Gi
+          cpu: 1
+          memory: 2Gi
       #
       # -- (map)
       # Selector which must match a node's labels for the pod to be scheduled on that node.
@@ -797,7 +797,7 @@ mariadb:
     persistence:
       enabled: true
       existingClaim: ""
-      storageClass: lvms-vg1
+      storageClass: ""
       labels: {}
       annotations: {}
       accessModes:

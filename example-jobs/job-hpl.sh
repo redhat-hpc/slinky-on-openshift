@@ -1,19 +1,13 @@
 #!/bin/bash
 
 #SBATCH --job-name=hpl
-#SBATCH --nodes=6
+#SBATCH --nodes=3
 #SBATCH --exclusive
 
 eval `spack load --sh hpl`
 
-#mpirun -np 16 --display-allocation xhpl
-#srun -v -n 18 --cpu-bind=verbose xhpl
-#srun -v -N 3 -n 16 --ntasks-per-node=6 --cpu-bind=none xhpl
-#mpirun -np 16 xhpl
-
-#mpirun -np 16 --map-by node:PE=4 --bind-to core xhpl
-#mpirun -np 16 --display-allocation xhpl
+# export OMPI_MCA_btl_tcp_if_exclude=eth0,lo
 
 echo "start $(date)"
-mpirun -np 36 --map-by node xhpl
+mpirun --display-allocation --map-by=node -np 300 xhpl
 echo "end $(date)"

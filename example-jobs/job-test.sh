@@ -1,6 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=mpi_test
 #SBATCH --nodes=3
+#SBATCH --ntasks-per-node=4
 #SBATCH --exclusive
 
 # load Open MPI module
@@ -13,4 +14,7 @@ set -x
 mpicc test_mpi.c -o test_mpi
 
 # run compiled test_mpi.c file
-srun -v -n 16 ./test_mpi
+#srun -v -n 12 ./test_mpi
+
+#export OMPI_MCA_btl_tcp_if_exclude=eth0,lo
+mpirun -np 12 -mca btl_base_verbose 100 ./test_mpi

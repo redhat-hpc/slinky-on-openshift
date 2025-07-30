@@ -52,12 +52,12 @@ data:
     #   primarygroup = 4000
     #   passsha256 = "6478579e37aff45f013e14eeb30b3cc56c72ccdc310123bcdf53e0333e3f416a" # dogood
 
-    # [[users]]
-    #   name = "user1"
-    #   uidnumber = 5001
-    #   primarygroup = 4001
-    #   otherGroups = [4000]
-    #   passsha256 = "0a041b9462caa4a31bac3567e0b6e6fd9100787db2ab433d96f6d178cabfce90" # user1
+    [[users]]
+      name = "user1"
+      uidnumber = 5001
+      primarygroup = 4001
+      otherGroups = [4000]
+      passsha256 = "0a041b9462caa4a31bac3567e0b6e6fd9100787db2ab433d96f6d178cabfce90" # user1
 
     # [[users]]
     #   name = "user2"
