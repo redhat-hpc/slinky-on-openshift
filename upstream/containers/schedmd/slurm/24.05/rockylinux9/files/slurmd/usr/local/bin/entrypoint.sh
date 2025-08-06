@@ -4,8 +4,13 @@
 
 set -euo pipefail
 
-mkdir -p /run/slurm/
-
+# Additional arguments to pass to slurmd.
 export SLURMD_OPTIONS="${SLURMD_OPTIONS:-} $*"
 
-exec supervisord -c /etc/supervisor/supervisord.conf
+function main() {
+	mkdir -p /run/slurm/
+	mkdir -p /var/spool/slurmd/
+
+	exec supervisord -c /etc/supervisor/supervisord.conf
+}
+main

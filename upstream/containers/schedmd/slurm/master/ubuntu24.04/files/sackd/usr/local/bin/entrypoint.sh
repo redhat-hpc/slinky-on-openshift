@@ -4,8 +4,12 @@
 
 set -xeuo pipefail
 
-mkdir -p /run/slurm/
-
+# Additional arguments to pass to sackd.
 export SACKD_OPTIONS="${SACKD_OPTIONS:-} $*"
 
-exec supervisord -c /etc/supervisor/supervisord.conf
+function main() {
+	mkdir -p /run/slurm/
+
+	exec supervisord -c /etc/supervisor/supervisord.conf
+}
+main
