@@ -19,16 +19,19 @@ variables:
   CI_JOB_USER: gitlab-ci-token
 
 .docker:
-  image: docker:27.5.0
+  image: docker:28.1.1
   services:
-    - docker:27.5.0-rc.1-dind
+    - docker:28.1.1-dind
   before_script:
     - set -euo pipefail
     - docker info
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - apk update && apk upgrade
-    - apk add --no-cache bash git make go helm
+    - apk add --no-cache bash git make helm
     - export PATH=$PATH:$HOME/go/bin/
+    - wget -O go.tgz https://go.dev/dl/go1.24.3.linux-amd64.tar.gz
+    - tar -C /usr/local -xzf go.tgz
+    - export PATH=$PATH:/usr/local/go/bin
     - go env -w GOPRIVATE=github.com/SlinkyProject/*
 
 test:
@@ -37,17 +40,20 @@ test:
   script:
     - set -euo pipefail
     - apk update && apk upgrade
-    - apk add --no-cache go make bash shellcheck shfmt pre-commit
-    - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-    - go install github.com/norwoodj/helm-docs/cmd/helm-docs@latest
-    - go install golang.org/x/vuln/cmd/govulncheck@latest
+    - apk add --no-cache shellcheck shfmt pre-commit
     - pre-commit run --verbose --all-files --show-diff-on-failure
   coverage: /total:\s+\(statements\)\s+\d+.\d+%/
   artifacts:
     expire_in: 7 days
     paths:
       - cover.html
-      - govulnreport.txt
+
+audit:
+  stage: test
+  extends: .docker
+  script:
+    - make govulncheck
+  allow_failure: true
 
 include:
   - template: Jobs/Secret-Detection.gitlab-ci.yml
@@ -73,6 +79,7 @@ release-oci:
         exit 1;
       fi
     - echo "$DOCKER_REGISTRY_PASSWORD" | docker login $DOCKER_REGISTRY -u $DOCKER_REGISTRY_USER --password-stdin
+    - make clean
     - make push
   rules:
     - if: $CI_COMMIT_REF_PROTECTED == "true"

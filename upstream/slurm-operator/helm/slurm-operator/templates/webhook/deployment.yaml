@@ -49,6 +49,10 @@ spec:
             - name: certificates
               mountPath: /tmp/k8s-webhook-server/serving-certs/
               readOnly: true
+      {{- with .Values.webhook.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with .Values.webhook.affinity */}}
       {{- with .Values.webhook.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}

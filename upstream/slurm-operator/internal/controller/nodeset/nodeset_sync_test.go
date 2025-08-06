@@ -824,7 +824,7 @@ func TestNodeSetReconciler_processCondemned(t *testing.T) {
 				t.Errorf("slurmControl.IsNodeDrain() = %v, wantDrain %v", isDrain, tt.wantDrain)
 			}
 			key := client.ObjectKeyFromObject(pod)
-			if err := r.Client.Get(tt.args.ctx, key, pod); err != nil && !apierrors.IsNotFound(err) {
+			if err := r.Get(tt.args.ctx, key, pod); err != nil && !apierrors.IsNotFound(err) {
 				t.Errorf("Client.Get() error = %v, wantDelete %v", err, tt.wantDelete)
 			}
 		})
@@ -1584,6 +1584,42 @@ func TestNodeSetReconciler_syncRollingUpdate(t *testing.T) {
 				wantErr: false,
 			}
 		}(),
+		func() testCaseFields {
+			nodeset := newNodeSet("foo", clusterName, 2)
+			nodeset.Spec.UpdateStrategy.Type = slinkyv1alpha1.RollingUpdateNodeSetStrategyType
+			nodeset.Spec.UpdateStrategy.RollingUpdate = &slinkyv1alpha1.RollingUpdateNodeSetStrategy{
+				MaxUnavailable: ptr.To(intstr.FromString("10%")),
+			}
+			pod1 := nodesetutils.NewNodeSetPod(nodeset, 0, "")
+			makePodHealthy(pod1)
+			pod2 := nodesetutils.NewNodeSetPod(nodeset, 1, "")
+			k8sclient := fake.NewFakeClient(nodeset, pod1, pod2)
+			slurmNodeList := &slurmtypes.V0041NodeList{
+				Items: []slurmtypes.V0041Node{
+					{
+						V0041Node: v0041.V0041Node{
+							Name:  ptr.To(nodesetutils.GetNodeName(pod1)),
+							State: ptr.To([]v0041.V0041NodeState{v0041.V0041NodeStateIDLE}),
+						},
+					},
+				},
+			}
+			slurmClient := newFakeClientList(sinterceptor.Funcs{}, slurmNodeList)
+			return testCaseFields{
+				name: "update, with unhealthy",
+				fields: fields{
+					Client:        k8sclient,
+					SlurmClusters: newSlurmClusters(clusterName, slurmClient),
+				},
+				args: args{
+					ctx:     context.TODO(),
+					nodeset: nodeset,
+					pods:    []*corev1.Pod{pod1, pod2},
+					hash:    hash,
+				},
+				wantErr: false,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1604,6 +1640,7 @@ func TestNodeSetReconciler_splitUpdatePods(t *testing.T) {
 		Client client.Client
 	}
 	type args struct {
+		ctx     context.Context
 		nodeset *slinkyv1alpha1.NodeSet
 		pods    []*corev1.Pod
 		hash    string
@@ -1621,6 +1658,7 @@ func TestNodeSetReconciler_splitUpdatePods(t *testing.T) {
 				Client: fake.NewFakeClient(),
 			},
 			args: args{
+				ctx: context.TODO(),
 				nodeset: func() *slinkyv1alpha1.NodeSet {
 					nodeset := newNodeSet("foo", clusterName, 0)
 					nodeset.Spec.UpdateStrategy.Type = slinkyv1alpha1.OnDeleteNodeSetStrategyType
@@ -1668,6 +1706,7 @@ func TestNodeSetReconciler_splitUpdatePods(t *testing.T) {
 				Client: fake.NewFakeClient(),
 			},
 			args: args{
+				ctx: context.TODO(),
 				nodeset: func() *slinkyv1alpha1.NodeSet {
 					nodeset := newNodeSet("foo", clusterName, 0)
 					nodeset.Spec.UpdateStrategy.Type = slinkyv1alpha1.RollingUpdateNodeSetStrategyType
@@ -1716,7 +1755,7 @@ func TestNodeSetReconciler_splitUpdatePods(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := newNodeSetController(tt.fields.Client, nil)
-			gotPodsToDelete, gotPodsToKeep := r.splitUpdatePods(tt.args.nodeset, tt.args.pods, tt.args.hash)
+			gotPodsToDelete, gotPodsToKeep := r.splitUpdatePods(tt.args.ctx, tt.args.nodeset, tt.args.pods, tt.args.hash)
 
 			gotPodsToDeleteOrdered := make([]string, len(gotPodsToDelete))
 			for i := range gotPodsToDelete {

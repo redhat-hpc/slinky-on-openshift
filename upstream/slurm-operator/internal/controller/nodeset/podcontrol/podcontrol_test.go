@@ -220,7 +220,7 @@ func Test_realPodControl_DeleteNodeSetPod(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Non-existant pod",
+			name: "Non-existent pod",
 			fields: fields{
 				Client:   fake.NewFakeClient(),
 				recorder: record.NewFakeRecorder(10),
@@ -1203,7 +1203,7 @@ func Test_hasNonControllerOwner(t *testing.T) {
 	testCases := []struct {
 		name string
 		refs []metav1.OwnerReference
-		// The set and pod objets will be created with names "set" and "pod", respectively.
+		// The set and pod objects will be created with names "set" and "pod", respectively.
 		setUID        types.UID
 		podUID        types.UID
 		nonController bool

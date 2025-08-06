@@ -40,25 +40,27 @@ function sys::check() {
 	if ! command -v kubectl >/dev/null 2>&1; then
 		echo "'kubectl' is recommended: https://kubernetes.io/docs/reference/kubectl/"
 	fi
-	if [ "$(sysctl -n kernel.keys.maxkeys)" -lt 2000 ]; then
-		echo "Recommended to increase 'kernel.keys.maxkeys':"
-		echo "  $ sudo sysctl -w kernel.keys.maxkeys=2000"
-		echo "  $ echo 'kernel.keys.maxkeys=2000' | sudo tee --append /etc/sysctl.d/kernel"
-	fi
-	if [ "$(sysctl -n fs.file-max)" -lt 10000000 ]; then
-		echo "Recommended to increase 'fs.file-max':"
-		echo "  $ sudo sysctl -w fs.file-max=10000000"
-		echo "  $ echo 'fs.file-max=10000000' | sudo tee --append /etc/sysctl.d/fs"
-	fi
-	if [ "$(sysctl -n fs.inotify.max_user_instances)" -lt 65535 ]; then
-		echo "Recommended to increase 'fs.inotify.max_user_instances':"
-		echo "  $ sudo sysctl -w fs.inotify.max_user_instances=65535"
-		echo "  $ echo 'fs.inotify.max_user_instances=65535' | sudo tee --append /etc/sysctl.d/fs"
-	fi
-	if [ "$(sysctl -n fs.inotify.max_user_watches)" -lt 1048576 ]; then
-		echo "Recommended to increase 'fs.inotify.max_user_watches':"
-		echo "  $ sudo sysctl -w fs.inotify.max_user_watches=1048576"
-		echo "  $ echo 'fs.inotify.max_user_watches=1048576' | sudo tee --append /etc/sysctl.d/fs"
+	if [[ $OSTYPE == 'linux'* ]]; then
+		if [ "$(sysctl -n kernel.keys.maxkeys)" -lt 2000 ]; then
+			echo "Recommended to increase 'kernel.keys.maxkeys':"
+			echo "  $ sudo sysctl -w kernel.keys.maxkeys=2000"
+			echo "  $ echo 'kernel.keys.maxkeys=2000' | sudo tee --append /etc/sysctl.d/kernel"
+		fi
+		if [ "$(sysctl -n fs.file-max)" -lt 10000000 ]; then
+			echo "Recommended to increase 'fs.file-max':"
+			echo "  $ sudo sysctl -w fs.file-max=10000000"
+			echo "  $ echo 'fs.file-max=10000000' | sudo tee --append /etc/sysctl.d/fs"
+		fi
+		if [ "$(sysctl -n fs.inotify.max_user_instances)" -lt 65535 ]; then
+			echo "Recommended to increase 'fs.inotify.max_user_instances':"
+			echo "  $ sudo sysctl -w fs.inotify.max_user_instances=65535"
+			echo "  $ echo 'fs.inotify.max_user_instances=65535' | sudo tee --append /etc/sysctl.d/fs"
+		fi
+		if [ "$(sysctl -n fs.inotify.max_user_watches)" -lt 1048576 ]; then
+			echo "Recommended to increase 'fs.inotify.max_user_watches':"
+			echo "  $ sudo sysctl -w fs.inotify.max_user_watches=1048576"
+			echo "  $ echo 'fs.inotify.max_user_watches=1048576' | sudo tee --append /etc/sysctl.d/fs"
+		fi
 	fi
 	if $FLAG_EXTRAS; then
 		if ! systemctl is-active --quiet nfs-kernel-server.service; then

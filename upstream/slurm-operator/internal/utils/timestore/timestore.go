@@ -18,7 +18,7 @@ type TimeStore struct {
 	eval func(oldTime, newTime time.Time) bool
 }
 
-// NewDurationStore() returns a time store which will evalute which value to
+// NewDurationStore() returns a time store which will evaluate which value to
 // keep, when multiple are pushed to the same key, based on the eval() function.
 func NewTimeStore(eval func(oldTime, newTime time.Time) bool) *TimeStore {
 	return &TimeStore{eval: eval}
@@ -37,7 +37,7 @@ func Less(oldTime, newTime time.Time) bool {
 // TimeStore.eval() is kept.
 func (ts *TimeStore) Push(key string, newTime time.Time) {
 	newT := &timestore{t: newTime}
-	val, loaded := ts.Map.LoadOrStore(key, newT)
+	val, loaded := ts.LoadOrStore(key, newT)
 	if !loaded {
 		return
 	}
@@ -45,8 +45,8 @@ func (ts *TimeStore) Push(key string, newTime time.Time) {
 	if !ok {
 		// edge case: corrupt stored time
 		// recover: delete key and store new time
-		ts.Map.Delete(key)
-		ts.Map.Store(key, newT)
+		ts.Delete(key)
+		ts.Store(key, newT)
 		return
 	}
 	d.Update(newTime, ts.eval)
@@ -55,7 +55,7 @@ func (ts *TimeStore) Push(key string, newTime time.Time) {
 // Pop() will return the time stored by the key and delete the store. If no
 // time was stored for that key, then 0 will be returned.
 func (ts *TimeStore) Pop(key string) time.Time {
-	val, ok := ts.Map.LoadAndDelete(key)
+	val, ok := ts.LoadAndDelete(key)
 	if !ok {
 		// Nothing was stored, unit Time
 		return time.Time{}
@@ -72,7 +72,7 @@ func (ts *TimeStore) Pop(key string) time.Time {
 // Peek() will return the time stored by the key and *not* delete the store.
 // If no time was stored for that key, then 0 will be returned.
 func (ts *TimeStore) Peek(key string) time.Time {
-	val, ok := ts.Map.Load(key)
+	val, ok := ts.Load(key)
 	if !ok {
 		// Nothing was stored, unit Time
 		return time.Time{}

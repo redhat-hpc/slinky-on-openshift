@@ -105,6 +105,13 @@ Define controller state save path
 {{- end }}
 
 {{/*
+Define controller log file
+*/}}
+{{- define "slurm.controller.logFile" -}}
+{{- print "/var/log/slurm/slurmctld.log" -}}
+{{- end }}
+
+{{/*
 Define accounting name
 */}}
 {{- define "slurm.accounting.name" -}}
@@ -157,10 +164,23 @@ Determine accounting image reference (repo:tag)
 {{- end }}
 
 {{/*
-Define slurm accounting initContainers
+Define slurm accounting config
 */}}
 {{- define "slurm.accounting.config.name" -}}
 {{- printf "%s-accounting" (.Release.Name) -}}
+{{- end }}
+
+{{/*
+Define slurm accounting database secret
+*/}}
+{{- define "slurm.accounting.secretName" -}}
+{{- if and .Values.accounting.external.enabled .Values.accounting.external.secretName }}
+  {{- print .Values.accounting.external.secretName }}
+{{- else if and .Values.accounting.external.enabled }}
+  {{- printf "%s-database" (include "slurm.accounting.name" .) }}
+{{- else }}
+  {{- template "mariadb.secretName" .Subcharts.mariadb }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -231,6 +251,57 @@ Define compute log file
 {{- define "slurm.compute.logFile" -}}
 {{- print "/var/log/slurm/slurmd.log" -}}
 {{- end }}
+
+{{/*
+Returns the parsed resource limits for POD_CPUS.
+*/}}
+{{- define "slurm.compute.podCpus" -}}
+{{- $out := 0 -}}
+{{- with .resources }}{{- with .limits }}{{- with .cpu }}
+  {{- $out = include "resource-quantity" . | float64 | ceil | int -}}
+{{- end }}{{- end }}{{- end }}
+{{- print $out -}}
+{{- end -}}
+
+{{/*
+Returns the parsed resource limits for POD_MEMORY, in Megabytes.
+*/}}
+{{- define "slurm.compute.podMemory" -}}
+{{- $out := 0 -}}
+{{- with .resources }}{{- with .limits }}{{- with .memory }}
+  {{- $megabytes := (include "resource-quantity" "1M") | float64 -}}
+  {{- $out = divf (include "resource-quantity" . | float64) $megabytes | ceil | int -}}
+{{- end }}{{- end }}{{- end }}
+{{- print $out -}}
+{{- end -}}
+
+{{/*
+Returns the --conf line given the NodeSet.
+Ref: https://slurm.schedmd.com/slurmd.html#OPT_conf-%3Cnode-parameters%3E
+Ref: https://slurm.schedmd.com/slurm.conf.html#SECTION_NODE-CONFIGURATION
+*/}}
+{{- define "slurm.compute.conf" -}}
+{{- $confList := list -}}
+{{- $featureList := list .name -}}
+{{- $featureKeyList := list "features" "feature" -}}
+{{- range $key, $val := .nodeConfig -}}
+  {{- if has (lower $key) $featureKeyList -}}
+    {{- if typeIs "string" $val -}}
+      {{- $featureList = concat $featureList (list $val) -}}
+    {{- else -}}
+      {{- $featureList = concat $featureList $val -}}
+    {{- end -}}
+  {{- else -}}
+    {{- if $val -}}
+      {{- $item := printf "%s=%s" $key ($val | join ",") -}}
+      {{- $confList = append $confList $item -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $item := printf "Features=%s" (join "," $featureList) -}}
+{{- $confList = prepend $confList $item -}}
+{{- printf "'%s'" (join " " $confList) | quote -}}
+{{- end -}}
 
 {{/*
 Determine login image repository
@@ -388,8 +459,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Define slurm auth secret name
 */}}
 {{- define "slurm.auth.secretName" -}}
-{{- if ((.Values.slurm).auth).existingSecret -}}
-  {{- printf "%s" (tpl .Values.slurm.auth.existingSecret $) -}}
+{{- if ((.Values.slurm).auth).secretName -}}
+  {{- printf "%s" (tpl .Values.slurm.auth.secretName $) -}}
 {{- else -}}
   {{- printf "%s-auth-key" (.Release.Name) -}}
 {{- end -}}
@@ -415,8 +486,8 @@ Define slurm mountPath
 Define slurm jwt hs256 secret name
 */}}
 {{- define "slurm.jwt.hs256.secretName" -}}
-{{- if ((.Values.jwt).hs256).existingSecret -}}
-  {{- printf "%s" (tpl .Values.jwt.hs256.existingSecret $) -}}
+{{- if ((.Values.jwt).hs256).secretName -}}
+  {{- printf "%s" (tpl .Values.jwt.hs256.secretName $) -}}
 {{- else -}}
   {{- printf "%s-jwt-key" (.Release.Name) -}}
 {{- end -}}

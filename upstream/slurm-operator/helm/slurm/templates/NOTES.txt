@@ -80,7 +80,7 @@ The Slurm controller service:
 
 Learn more about slurmctld:
   - Overview: https://slurm.schedmd.com/slurmctld.html
-  - Configless: hhttps://slurm.schedmd.com/configless_slurm.html
+  - Configless: https://slurm.schedmd.com/configless_slurm.html
 {{- end }}{{- /* if .Values.controller.enabled */}}
 
 {{- if .Values.restapi.enabled }}

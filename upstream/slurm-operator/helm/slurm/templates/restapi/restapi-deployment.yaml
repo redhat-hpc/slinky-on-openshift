@@ -17,8 +17,6 @@ spec:
   selector:
     matchLabels:
       {{- include "slurm.restapi.selectorLabels" . | nindent 6 }}
-  strategy:
-    type: Recreate
   template:
     metadata:
       annotations:
@@ -30,10 +28,6 @@ spec:
       automountServiceAccountToken: false
       dnsConfig:
         {{- include "slurm.dnsConfig" . | nindent 8 }}
-      {{- with .Values.restapi.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{- /* with .Values.restapi.affinity */}}
       {{- include "slurm.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: init
@@ -95,6 +89,14 @@ spec:
               port: slurmrestd
           volumeMounts:
             {{- include "slurm.volumeMounts" . | nindent 12 }}
+      {{- with .Values.restapi.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with .Values.restapi.nodeSelector */}}
+      {{- with .Values.restapi.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with .Values.restapi.affinity */}}
       {{- with .Values.restapi.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}

@@ -114,7 +114,7 @@ var _ = BeforeSuite(func() {
 		if err != nil {
 			return err
 		}
-		conn.Close()
+		Expect(conn.Close()).NotTo(HaveOccurred())
 		return nil
 	}).Should(Succeed())
 

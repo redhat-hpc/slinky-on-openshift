@@ -57,7 +57,7 @@ func (o ActivePods) Less(i, j int) bool {
 		return podDeletionCost1 < podDeletionCost2
 	}
 
-	// Step: ealier deadline timestamp < later deadline timestamp
+	// Step: earlier deadline timestamp < later deadline timestamp
 	podDeadline1, _ := utils.GetTimeFromAnnotations(pod1.Annotations, slinkyv1alpha1.AnnotationPodDeadline)
 	podDeadline2, _ := utils.GetTimeFromAnnotations(pod2.Annotations, slinkyv1alpha1.AnnotationPodDeadline)
 	if !podDeadline1.Equal(podDeadline2) {
@@ -129,4 +129,41 @@ func SplitActivePods(pods []*corev1.Pod, partition int) (pods1, pods2 []*corev1.
 	copy(pods2, pods[pivot:])
 
 	return pods1, pods2
+}
+
+// PodsByCreationTimestamp sorts a list of Pods by creation timestamp, using their names as a tie breaker.
+type PodsByCreationTimestamp []*corev1.Pod
+
+func (o PodsByCreationTimestamp) Len() int {
+	return len(o)
+}
+
+func (o PodsByCreationTimestamp) Swap(i, j int) {
+	o[i], o[j] = o[j], o[i]
+}
+
+func (o PodsByCreationTimestamp) Less(i, j int) bool {
+	if o[i].CreationTimestamp.Equal(&o[j].CreationTimestamp) {
+		return o[i].Name < o[j].Name
+	}
+	return o[i].CreationTimestamp.Before(&o[j].CreationTimestamp)
+}
+
+// SplitUnhealthyPods returns lists of healthy and unhealthy pods.
+func SplitUnhealthyPods(pods []*corev1.Pod) (unhealthyPods, healthyPods []*corev1.Pod) {
+	var numUnhealthy int
+	for _, pod := range pods {
+		if !utils.IsHealthy(pod) {
+			numUnhealthy++
+		}
+	}
+
+	unhealthyPods = make([]*corev1.Pod, numUnhealthy)
+	healthyPods = make([]*corev1.Pod, len(pods)-numUnhealthy)
+
+	sort.Sort(PodsByCreationTimestamp(pods))
+	copy(unhealthyPods, pods[:numUnhealthy])
+	copy(healthyPods, pods[numUnhealthy:])
+
+	return unhealthyPods, healthyPods
 }

@@ -20,7 +20,7 @@ func TestNewClusters(t *testing.T) {
 		want *Clusters
 	}{
 		{
-			name: "Test new clutsers",
+			name: "Test new clusters",
 			want: &Clusters{
 				clients: make(map[string]client.Client),
 			},

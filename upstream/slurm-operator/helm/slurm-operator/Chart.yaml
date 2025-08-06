@@ -1,6 +1,6 @@
 ---
 apiVersion: v2
-appVersion: "24.11"
+appVersion: "25.05"
 description: Helm Chart for Slurm HPC Workload Manager Operator
 name: slurm-operator
 type: application

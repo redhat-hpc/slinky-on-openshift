@@ -49,7 +49,7 @@ func (r *ClusterReconciler) updateStatus(
 	cluster *slinkyv1alpha1.Cluster,
 	status *slinkyv1alpha1.ClusterStatus,
 ) error {
-	// do not perform an update when the status is consistant
+	// do not perform an update when the status is consistent
 	if !inconsistentStatus(cluster, status) {
 		return nil
 	}

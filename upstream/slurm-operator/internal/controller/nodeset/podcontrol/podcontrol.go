@@ -202,7 +202,7 @@ func (r *realPodControl) UpdatePodPVCsForRetentionPolicy(ctx context.Context, no
 		default:
 			if hasUnexpectedController(claim, nodeset, pod) {
 				// Add an event so the user knows they're in a strange configuration. The claim will be cleaned up below.
-				msg := fmt.Sprintf("PersistentVolumeClaim %s has a conflicting OwnerReference that acts as a manging controller, the retention policy is ignored for this claim", claimName)
+				msg := fmt.Sprintf("PersistentVolumeClaim %s has a conflicting OwnerReference that acts as a managing controller, the retention policy is ignored for this claim", claimName)
 				r.recorder.Event(nodeset, corev1.EventTypeWarning, "ConflictingController", msg)
 			}
 			if !isClaimOwnerUpToDate(logger, claim, nodeset, pod) {

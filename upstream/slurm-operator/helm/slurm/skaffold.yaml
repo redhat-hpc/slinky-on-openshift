@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # https://skaffold.dev/docs/references/yaml/
-apiVersion: skaffold/v4beta1
+apiVersion: skaffold/v4beta13
 kind: Config
 deploy:
   helm:
