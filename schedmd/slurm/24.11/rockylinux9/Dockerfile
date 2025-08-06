@@ -4,51 +4,81 @@
 
 ################################################################################
 
-ARG SLURM_VERSION=24.11.4
+ARG SLURM_VERSION=24.11-latest
+ARG SLURM_DIR="slurm-${SLURM_VERSION}"
+ARG PARENT_IMAGE=rockylinux:9
 
 ################################################################################
-ARG PARENT_IMAGE=rockylinux:9
+FROM alpine:latest AS slurm-src
+
+ARG SLURM_VERSION
+ARG SLURM_DIR
+
+WORKDIR /workspace/
+
+ADD https://download.schedmd.com/slurm/${SLURM_DIR}.tar.bz2 ${SLURM_DIR}.tar.bz2
+
+RUN <<EOR
+# Unpack Slurm Source
+set -xeuo pipefail
+apk add --no-cache tar
+mkdir -p ${SLURM_DIR}
+tar --strip-components=1 -jxvf ${SLURM_DIR}.tar.bz2 -C ${SLURM_DIR}
+rm ${SLURM_DIR}.tar.bz2
+EOR
+
+################################################################################
 FROM ${PARENT_IMAGE} AS build
 
 SHELL ["bash", "-c"]
 
 ARG SLURM_VERSION
 ENV SLURM_VERSION=${SLURM_VERSION}
+ARG SLURM_DIR
 
 USER root
 WORKDIR /tmp/
+
+COPY --from=slurm-src /workspace/${SLURM_DIR} ${SLURM_DIR}
 
 COPY patches/ patches/
 
 # Ref: https://slurm.schedmd.com/quickstart_admin.html#rpmbuild
 RUN <<EOR
-# Download and Build Slurm
+# Patch and Build Slurm
 set -xeuo pipefail
-dnf -q makecache --refresh
 dnf -q -y install --setopt='install_weak_deps=False' \
-  '@Development' rpm-build 'dnf-command(builddep)' 'dnf-command(config-manager)' epel-release curl-minimal
+  '@Development' rpm-build 'dnf-command(builddep)' 'dnf-command(config-manager)' epel-release
 dnf -q config-manager --enable crb
 dnf -q -y upgrade --refresh
-## Download
-SLURM_DIR="slurm-${SLURM_VERSION}"
-mkdir -p $SLURM_DIR
-if [ $(curl -s -Iw '%{http_code}' -o /dev/null https://download.schedmd.com/slurm/${SLURM_DIR}.tar.bz2) -eq 200 ]; then
-  curl -s -O https://download.schedmd.com/slurm/${SLURM_DIR}.tar.bz2
-  tar --strip-components=1 -jxvf ${SLURM_DIR}.tar.bz2 -C $SLURM_DIR
-else
-  curl -s -L -H "Accept: application/vnd.github+json" -O https://github.com/SchedMD/slurm/archive/${SLURM_VERSION}.tar.gz
-  tar --strip-components=1 -zxvf ${SLURM_VERSION}.tar.gz -C $SLURM_DIR
-fi
 ## Patch
-find $(pwd)/patches/ -type f -name "*.patch" -print0 | sort -z | xargs -t0r -n1 patch -p1 -d $SLURM_DIR -i
+find $(pwd)/patches/ -type f -name "*.patch" -print0 | sort -z | xargs -t0r -n1 patch -p1 -d ${SLURM_DIR} -i
 ## Build
-SLURM_RPM_DIR="$(rpmspec -q ${SLURM_DIR}/slurm.spec 2> /dev/null | grep -Eo "slurm-[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*(-[[:alnum:]]*)?" | head -n1 | sed -E 's/-[[:alnum:]]+$//g')"
-if [ "$SLURM_DIR" != "$SLURM_RPM_DIR" ]; then
-  mv $SLURM_DIR $SLURM_RPM_DIR
+SLURM_RPM_DIR="$(rpmspec -q ${SLURM_DIR}/slurm.spec 2> /dev/null | grep -Eo "slurm-[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+(-[[:alnum:]]+)?" | head -n1 | sed -E 's/-[[:digit:]]+$//g')"
+if [ "${SLURM_DIR}" != "$SLURM_RPM_DIR" ]; then
+  mv ${SLURM_DIR} $SLURM_RPM_DIR
 fi
 rm -f ${SLURM_RPM_DIR}.tar.bz2
 tar -caf ${SLURM_RPM_DIR}.tar.bz2 $SLURM_RPM_DIR
-dnf -q -y builddep -D '_with_slurmrestd 1' -D '_with_jwt 1' -D '_with_yaml 1' -D '_with_numa 1' ${SLURM_RPM_DIR}/slurm.spec
+dnf -q -y builddep \
+  -D '_with_slurmrestd 1' \
+  -D '_with_jwt 1' \
+  -D '_with_yaml 1' \
+  -D '_with_hwloc --with-hwloc' \
+  -D '_with_numa 1' \
+  -D '_with_pmix --with-pmix' \
+  -D '_with_ucx --with-ucx' \
+  -D '_with_lua yes' \
+  -D '_with_freeipmi 1' \
+  -D '_with_hdf5 yes' \
+  -D '_with_libcurl yes' \
+  ${SLURM_RPM_DIR}/slurm.spec
+## FIXME: remove package installations after RPM spec makes them dependencies: cgroups/v2
+dnf -q -y install --setopt='install_weak_deps=False' \
+  kernel-headers dbus-devel
+## FIXME: remove package installations after RPM spec makes them dependencies: --with-hdf5
+dnf -q -y install --setopt='install_weak_deps=False' \
+  hdf5-devel
 rpmbuild -ta --with slurmrestd --with jwt ${SLURM_RPM_DIR}.tar.bz2 >/dev/null
 ## Cleanup
 dnf clean all
@@ -61,23 +91,6 @@ SHELL ["bash", "-c"]
 
 ARG SLURM_VERSION
 ENV SLURM_VERSION=${SLURM_VERSION}
-
-# OCI Annotations
-# https://github.com/opencontainers/image-spec/blob/v1.0/annotations.md
-LABEL \
-  org.opencontainers.image.authors="slinky@schedmd.com" \
-  org.opencontainers.image.documentation="https://slurm.schedmd.com/documentation.html" \
-  org.opencontainers.image.license="GPL-2.0-or-later WITH openssl-exception" \
-  org.opencontainers.image.vendor="SchedMD LLC." \
-  org.opencontainers.image.version="${SLURM_VERSION}" \
-  org.opencontainers.image.source="https://github.com/SlinkyProject/containers"
-
-# HasRequiredLabel requirement from Red Hat OpenShift Software Certification
-# https://access.redhat.com/documentation/en-us/red_hat_software_certification/2024/html/red_hat_openshift_software_certification_policy_guide/assembly-requirements-for-container-images_openshift-sw-cert-policy-introduction#con-image-metadata-requirements_openshift-sw-cert-policy-container-images
-LABEL \
-  vendor="SchedMD LLC." \
-  version="${SLURM_VERSION}" \
-  release="https://github.com/SlinkyProject/containers"
 
 USER root
 WORKDIR /tmp/
@@ -106,15 +119,11 @@ COPY --from=build /root/rpmbuild/RPMS/**/*.rpm /tmp/
 RUN <<EOR
 # Install Dependencies
 set -xeuo pipefail
-dnf -q makecache --refresh
 # For: Slurm RPM Dependencies
 dnf -q -y install --setopt='install_weak_deps=False' \
   'dnf-command(config-manager)' epel-release
 dnf config-manager --enable crb
 dnf -q -y upgrade --refresh
-# For: Helm Chart
-dnf -q -y install --setopt='install_weak_deps=False' \
-  rsync gettext iputils
 # Miscellaneous
 dnf -q -y install --setopt='install_weak_deps=False' \
   ncurses
@@ -124,39 +133,6 @@ dnf -q -y install --setopt='install_weak_deps=False' \
 dnf clean all
 EOR
 
-ENV KUBECTL_VERSION=1.32
-
-# Ref: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management
-RUN <<EOR
-# Install kubectl
-set -xeuo pipefail
-dnf -q makecache --refresh
-cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
-[kubernetes]
-name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/rpm/
-enabled=1
-gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/rpm/repodata/repomd.xml.key
-EOF
-dnf -q -y install --setopt='install_weak_deps=False' kubectl
-dnf clean all
-EOR
-
-## START DEBUG SECTION ###
-ARG DEBUG=0
-RUN <<EOR
-# For: Development and Debugging
-set -xeuo pipefail
-if [ "$DEBUG" = true ] || [ "$DEBUG" = 1 ]; then
-  dnf -q makecache --refresh
-  dnf -q -y install sudo
-  echo "${SLURM_USER} ALL=(ALL) NOPASSWD: ALL" >/etc/sudoers.d/slurm
-  dnf clean all
-fi
-EOR
-### END DEBUG SECTION ###
-
 ################################################################################
 # SLURM: slurmctld
 # BUILD: `docker build --target=slurmctld -t [<registry>/]slurmctld:<tag> .`
@@ -165,20 +141,6 @@ FROM base AS slurmctld
 
 SHELL ["bash", "-c"]
 
-# OCI Annotations
-# https://github.com/opencontainers/image-spec/blob/v1.0/annotations.md
-LABEL \
-  org.opencontainers.image.title="Slurm Control Plane" \
-  org.opencontainers.image.description="slurmctld - The central management daemon of Slurm" \
-  org.opencontainers.image.documentation="https://slurm.schedmd.com/slurmctld.html"
-
-# HasRequiredLabel requirement from Red Hat OpenShift Software Certification
-# https://access.redhat.com/documentation/en-us/red_hat_software_certification/2024/html/red_hat_openshift_software_certification_policy_guide/assembly-requirements-for-container-images_openshift-sw-cert-policy-introduction#con-image-metadata-requirements_openshift-sw-cert-policy-container-images
-LABEL \
-  name="Slurm Control Plane" \
-  summary="slurmctld - The central management daemon of Slurm" \
-  description="slurmctld - The central management daemon of Slurm"
-
 USER root
 WORKDIR /tmp/
 
@@ -186,7 +148,6 @@ WORKDIR /tmp/
 RUN <<EOR
 # Install Slurm Packages
 set -xeuo pipefail
-dnf -q makecache --refresh
 dnf -q -y install --setopt='install_weak_deps=False' \
   ./slurm-slurmctld-[0-9]*.rpm \
   ./slurm-[0-9]*.rpm
@@ -206,20 +167,6 @@ FROM base AS slurmd
 
 SHELL ["bash", "-c"]
 
-# OCI Annotations
-# https://github.com/opencontainers/image-spec/blob/v1.0/annotations.md
-LABEL \
-  org.opencontainers.image.title="Slurm Worker Agent" \
-  org.opencontainers.image.description="slurmd - The compute node daemon for Slurm" \
-  org.opencontainers.image.documentation="https://slurm.schedmd.com/slurmd.html"
-
-# HasRequiredLabel requirement from Red Hat OpenShift Software Certification
-# https://access.redhat.com/documentation/en-us/red_hat_software_certification/2024/html/red_hat_openshift_software_certification_policy_guide/assembly-requirements-for-container-images_openshift-sw-cert-policy-introduction#con-image-metadata-requirements_openshift-sw-cert-policy-container-images
-LABEL \
-  name="Slurm Worker Agent" \
-  summary="slurmd - The compute node daemon for Slurm" \
-  description="slurmd - The compute node daemon for Slurm"
-
 USER root
 WORKDIR /tmp/
 
@@ -227,8 +174,8 @@ WORKDIR /tmp/
 RUN <<EOR
 # Install Slurm Packages
 set -xeuo pipefail
-dnf -q makecache --refresh
 dnf -q -y install --setopt='install_weak_deps=False' \
+  gawk \
   ./slurm-devel-[0-9]*.rpm \
   ./slurm-libpmi-[0-9]*.rpm \
   ./slurm-pam_slurm-[0-9]*.rpm \
@@ -236,6 +183,7 @@ dnf -q -y install --setopt='install_weak_deps=False' \
   ./slurm-[0-9]*.rpm
 rm *.rpm && dnf clean all
 # Configure
+mkdir -p /var/spool/slurmd/
 cp -v /etc/nsswitch.conf{,.bak}
 sed -i -E "s/^passwd:[[:space:]]+/&slurm /g" /etc/nsswitch.conf
 sed -i -E "s/^group:[[:space:]]+/&slurm /g" /etc/nsswitch.conf
@@ -254,20 +202,6 @@ FROM base AS slurmdbd
 
 SHELL ["bash", "-c"]
 
-# OCI Annotations
-# https://github.com/opencontainers/image-spec/blob/v1.0/annotations.md
-LABEL \
-  org.opencontainers.image.title="Slurm Database Agent" \
-  org.opencontainers.image.description="slurmdbd - Slurm Database Daemon" \
-  org.opencontainers.image.documentation="https://slurm.schedmd.com/slurmdbd.html"
-
-# HasRequiredLabel requirement from Red Hat OpenShift Software Certification
-# https://access.redhat.com/documentation/en-us/red_hat_software_certification/2024/html/red_hat_openshift_software_certification_policy_guide/assembly-requirements-for-container-images_openshift-sw-cert-policy-introduction#con-image-metadata-requirements_openshift-sw-cert-policy-container-images
-LABEL \
-  name="Slurm Database Agent" \
-  summary="slurmdbd - Slurm Database Daemon" \
-  description="slurmdbd - Slurm Database Daemon"
-
 USER root
 WORKDIR /tmp/
 
@@ -275,7 +209,6 @@ WORKDIR /tmp/
 RUN <<EOR
 # Install Slurm Packages
 set -xeuo pipefail
-dnf -q makecache --refresh
 dnf -q -y install --setopt='install_weak_deps=False' \
   ./slurm-slurmdbd-[0-9]*.rpm \
   ./slurm-[0-9]*.rpm
@@ -293,20 +226,6 @@ FROM base AS slurmrestd
 
 SHELL ["bash", "-c"]
 
-# OCI Annotations
-# https://github.com/opencontainers/image-spec/blob/v1.0/annotations.md
-LABEL \
-  org.opencontainers.image.title="Slurm REST API Agent" \
-  org.opencontainers.image.description="slurmrestd - Interface to Slurm via REST API" \
-  org.opencontainers.image.documentation="https://slurm.schedmd.com/slurmrestd.html"
-
-# HasRequiredLabel requirement from Red Hat OpenShift Software Certification
-# https://access.redhat.com/documentation/en-us/red_hat_software_certification/2024/html/red_hat_openshift_software_certification_policy_guide/assembly-requirements-for-container-images_openshift-sw-cert-policy-introduction#con-image-metadata-requirements_openshift-sw-cert-policy-container-images
-LABEL \
-  name="Slurm REST API Agent" \
-  summary="slurmrestd - Interface to Slurm via REST API" \
-  description="slurmrestd - Interface to Slurm via REST API"
-
 USER root
 WORKDIR /tmp/
 
@@ -314,7 +233,6 @@ WORKDIR /tmp/
 RUN <<EOR
 # Install Slurm Packages
 set -xeuo pipefail
-dnf -q makecache --refresh
 dnf -q -y install --setopt='install_weak_deps=False' \
   ./slurm-slurmrestd-[0-9]*.rpm \
   ./slurm-[0-9]*.rpm
@@ -333,31 +251,38 @@ FROM base AS sackd
 
 SHELL ["bash", "-c"]
 
-# OCI Annotations
-# https://github.com/opencontainers/image-spec/blob/v1.0/annotations.md
-LABEL \
-  org.opencontainers.image.title="Slurm Auth/Cred Server" \
-  org.opencontainers.image.description="sackd - Slurm Auth and Cred Kiosk Daemon" \
-  org.opencontainers.image.documentation="https://slurm.schedmd.com/sackd.html"
-
-# HasRequiredLabel requirement from Red Hat OpenShift Software Certification
-# https://access.redhat.com/documentation/en-us/red_hat_software_certification/2024/html/red_hat_openshift_software_certification_policy_guide/assembly-requirements-for-container-images_openshift-sw-cert-policy-introduction#con-image-metadata-requirements_openshift-sw-cert-policy-container-images
-LABEL \
-  name="Slurm Auth/Cred Server" \
-  summary="sackd - Slurm Auth and Cred Kiosk Daemon" \
-  description="sackd - Slurm Auth and Cred Kiosk Daemon"
-
 USER root
 WORKDIR /tmp/
+
+ADD https://dl.k8s.io/release/stable.txt kubernetes_stable.txt
+
+# Ref: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management
+RUN <<EOR
+# Install kubectl
+set -xeuo pipefail
+VERSION="$(cat kubernetes_stable.txt | grep -Eo '^v[0-9]+\.[0-9]+')"
+cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://pkgs.k8s.io/core:/stable:/${VERSION}/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://pkgs.k8s.io/core:/stable:/${VERSION}/rpm/repodata/repomd.xml.key
+EOF
+dnf -q -y install --setopt='install_weak_deps=False' kubectl
+rm *.txt && dnf clean all
+EOR
 
 # Ref: https://slurm.schedmd.com/quickstart_admin.html#pkg_install
 RUN <<EOR
 # Install Slurm Packages
 set -xeuo pipefail
-dnf -q makecache --refresh
 dnf -q -y install --setopt='install_weak_deps=False' \
   ./slurm-sackd-[0-9]*.rpm \
   ./slurm-[0-9]*.rpm
+# For: Helm Chart
+dnf -q -y install --setopt='install_weak_deps=False' \
+  rsync gettext iputils
 rm *.rpm && dnf clean all
 # Prepare Directories
 mkdir -p /run/slurm/
@@ -375,20 +300,6 @@ FROM sackd AS login
 
 SHELL ["bash", "-c"]
 
-# OCI Annotations
-# https://github.com/opencontainers/image-spec/blob/v1.0/annotations.md
-LABEL \
-  org.opencontainers.image.title="Slurm Login Container" \
-  org.opencontainers.image.description="An authenticated environment to submit Slurm workload from." \
-  org.opencontainers.image.documentation="https://slurm.schedmd.com/quickstart_admin.html#login"
-
-# HasRequiredLabel requirement from Red Hat OpenShift Software Certification
-# https://access.redhat.com/documentation/en-us/red_hat_software_certification/2024/html/red_hat_openshift_software_certification_policy_guide/assembly-requirements-for-container-images_openshift-sw-cert-policy-introduction#con-image-metadata-requirements_openshift-sw-cert-policy-container-images
-LABEL \
-  name="Slurm Login Container" \
-  summary="An authenticated environment to submit Slurm workload from." \
-  description="An authenticated environment to submit Slurm workload from."
-
 USER root
 WORKDIR /tmp/
 
@@ -396,20 +307,16 @@ WORKDIR /tmp/
 RUN <<EOR
 # Install Packages
 set -xeuo pipefail
-dnf -q makecache --refresh
 dnf -q -y install --setopt='install_weak_deps=False' \
   openssh-server \
   dbus-daemon \
+  oddjob-mkhomedir \
   authselect sssd sssd-ad sssd-ldap sssd-dbus
 rm *.rpm && dnf clean all
 # Configure
 mkdir -p /etc/authselect
 authselect select sssd with-mkhomedir --force
 rm -f /etc/ssh/ssh_host_*
-# Remove Packages
-dnf -q -y remove \
-  authselect
-dnf -q -y autoremove
 EOR
 
 COPY files/login/ /

@@ -4,8 +4,12 @@
 
 set -euo pipefail
 
-mkdir -p /run/slurmctld/
-
+# Additional arguments to pass to slurmctld.
 export SLURMCTLD_OPTIONS="${SLURMCTLD_OPTIONS:-} $*"
 
-exec supervisord -c /etc/supervisor/supervisord.conf
+function main() {
+	mkdir -p /run/slurmctld/
+
+	exec supervisord -c /etc/supervisor/supervisord.conf
+}
+main
