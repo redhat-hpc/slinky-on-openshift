@@ -55,12 +55,10 @@ spec:
         - name: login
           image: {{ include "slurm.login.imageRef" . }}
           imagePullPolicy: {{ .Values.login.imagePullPolicy | default (include "slurm.imagePullPolicy" .) }}
+          {{- with .Values.login.securityContext }}
           securityContext:
-            privileged: false
-            allowPrivilegeEscalation: false
-            capabilities:
-              add:
-                - SYS_CHROOT
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           env:
             - name: SACKD_OPTIONS
               value: --conf-server={{- printf "%s:%s" (include "slurm.controller.name" .) (include "slurm.controller.port" .) }}
@@ -71,6 +69,12 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}{{- /* with .Values.login.resources */}}
+          readinessProbe:
+            exec:
+              command:
+                - test
+                - -S
+                - /run/slurm/sack.socket
           volumeMounts:
             {{- include "slurm.volumeMounts" . | nindent 12 }}
             - name: authsocket
@@ -102,6 +106,10 @@ spec:
             {{- with .Values.login.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}{{- /* range $vol := $.Values.login.extraVolumeMounts */}}
+      {{- with .Values.accounting.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with .Values.accounting.nodeSelector */}}
       {{- with .Values.login.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}

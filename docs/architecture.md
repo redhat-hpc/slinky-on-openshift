@@ -7,7 +7,10 @@
 - [Architecture](#architecture)
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
-  - [Big Picture](#big-picture)
+  - [Operator](#operator)
+  - [Slurm](#slurm)
+    - [Hybrid](#hybrid)
+    - [Autoscale](#autoscale)
   - [Directory Map](#directory-map)
     - [`api/`](#api)
     - [`cmd/`](#cmd)
@@ -25,9 +28,12 @@
 This document describes the high-level architecture of the Slinky
 `slurm-operator`.
 
-## Big Picture
+## Operator
 
-![Big Picture](./assets/slurm-operator_big-picture.svg)
+The following diagram illustrates the operator, from a communication
+perspective.
+
+<img src="./assets/architecture-operator.svg" alt="Slurm Operator Architecture" width="100%" height="auto" />
 
 The `slurm-operator` follows the Kubernetes
 [operator pattern][operator-pattern].
@@ -43,6 +49,35 @@ the state of the Custom Resource (CR) is reconciled.
 Often, an operator is only concerned about data reported by the Kubernetes API.
 In our case, we are also concerned about data reported by the Slurm API, which
 influences how the `slurm-operator` reconciles certain CRs.
+
+## Slurm
+
+The following diagram illustrates a containerized Slurm cluster, from a
+communication perspective.
+
+<img src="./assets/architecture-slurm.svg" alt="Slurm Cluster Architecture" width="100%" height="auto" />
+
+For additional information about Slurm, see the [slurm] docs.
+
+### Hybrid
+
+The following hybrid diagram is an example. There are many different
+configurations for a hybrid setup. The core takeaways are: slurmd can be on
+bare-metal and still be joined to your containerized Slurm cluster; external
+services that your Slurm cluster needs or wants (e.g. AD/LDAP, NFS, MariaDB) do
+not have to live in Kubernetes to be functional with your Slurm cluster.
+
+<img src="./assets/architecture-slurm-hybrid.svg" alt="Hybrid Slurm Cluster Architecture" width="100%" height="auto" />
+
+### Autoscale
+
+Kubernetes supports resource autoscaling. In the context of Slurm, autoscaling
+Slurm compute nodes can be quite useful when your Kubernetes and Slurm clusters
+have workload fluctuations.
+
+<img src="./assets/architecture-autoscale.svg" alt="Autoscale Architecture" width="100%" height="auto" />
+
+See the [autoscaling] guide for additional information.
 
 ## Directory Map
 
@@ -96,9 +131,11 @@ Currently, this consists of the nodeset and the cluster CRDs.
 
 <!-- Links -->
 
+[autoscaling]: ./autoscaling.md
 [golang-layout]: https://go.dev/doc/modules/layout
 [helm]: https://helm.sh/
 [kubebuilder]: https://book.kubebuilder.io/
 [kustomize]: https://kustomize.io/
 [operator-pattern]: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
 [operator-sdk]: https://sdk.operatorframework.io/
+[slurm]: ./slurm.md

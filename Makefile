@@ -65,12 +65,12 @@ REGISTRY ?= slinky.slurm.net
 
 .PHONY: build
 build: ## Build container images.
-	$(foreach dockerfile, $(wildcard ./build/**/Dockerfile), $(MAKE) docker-build IMG="$(REGISTRY)/$(shell basename "$(shell dirname "${dockerfile}")"):$(VERSION)" DOCKERFILE_PATH="${dockerfile}" ;)
+	REGISTRY=$(REGISTRY) VERSION=$(VERSION) docker buildx bake
 	$(foreach chart, $(wildcard ./helm/**/Chart.yaml), helm package --dependency-update helm/$(shell basename "$(shell dirname "${chart}")") ;)
 
 .PHONY: push
 push: build ## Push container images.
-	$(foreach dockerfile, $(wildcard ./build/**/Dockerfile), $(MAKE) docker-push IMG="$(REGISTRY)/$(shell basename "$(shell dirname "${dockerfile}")"):$(VERSION)" DOCKERFILE_PATH="${dockerfile}" ;)
+	REGISTRY=$(REGISTRY) VERSION=$(VERSION) docker buildx bake --push
 	$(foreach chart, $(wildcard ./*.tgz), helm push ${chart} oci://$(REGISTRY)/charts ;)
 
 .PHONY: clean
@@ -78,7 +78,6 @@ clean: ## Clean executable files.
 	@ chmod -R -f u+w bin/ || true # make test installs files without write permissions.
 	rm -rf bin/
 	rm -rf vendor/
-	rm -f govulnreport.txt
 	rm -f cover.out cover.html
 	rm -f *.tgz
 
@@ -135,11 +134,28 @@ LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
+# go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
+# $1 - target path with name of binary (ideally with version)
+# $2 - package url which can be installed
+# $3 - specific version of package
+define go-install-tool
+@[ -f $(1) ] || { \
+set -e; \
+package=$(2)@$(3) ;\
+echo "Downloading $${package}" ;\
+GOBIN=$(LOCALBIN) go install $${package} ;\
+mv "$$(echo "$(1)" | sed "s/-$(3)$$//")" $(1) ;\
+}
+endef
+
 ## Tool Binaries
 KUBECTL ?= kubectl
-KUSTOMIZE ?= $(LOCALBIN)/kustomize
-CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
-ENVTEST ?= $(LOCALBIN)/setup-envtest
+KUSTOMIZE ?= $(LOCALBIN)/kustomize-$(KUSTOMIZE_VERSION)
+CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen-$(CONTROLLER_TOOLS_VERSION)
+ENVTEST ?= $(LOCALBIN)/setup-envtest-$(ENVTEST_VERSION)
+GOVULNCHECK ?= $(LOCALBIN)/govulncheck-$(GOVULNCHECK_VERSION)
+GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
+HELM_DOCS ?= $(LOCALBIN)/helm-docs-$(HELM_DOCS_VERSION)
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.4.3
@@ -147,26 +163,40 @@ CONTROLLER_TOOLS_VERSION ?= v0.16.4
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION ?= $(shell go list -m -f "{{ .Version }}" k8s.io/api | awk -F'[v.]' '{printf "1.%d", $$3}')
 ENVTEST_VERSION ?= $(shell go list -m -f "{{ .Version }}" sigs.k8s.io/controller-runtime | awk -F'[v.]' '{printf "release-%d.%d", $$2, $$3}')
+GOVULNCHECK_VERSION ?= latest
+GOLANGCI_LINT_VERSION ?= v2.1.6
+HELM_DOCS_VERSION ?= v1.14.2
 
 .PHONY: kustomize
-kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
+kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
 $(KUSTOMIZE): $(LOCALBIN)
-	@if test -x $(LOCALBIN)/kustomize && ! $(LOCALBIN)/kustomize version | grep -q $(KUSTOMIZE_VERSION); then \
-		echo "$(LOCALBIN)/kustomize version is not expected $(KUSTOMIZE_VERSION). Removing it before installing."; \
-		rm -rf $(LOCALBIN)/kustomize; \
-	fi
-	test -s $(LOCALBIN)/kustomize || GOBIN=$(LOCALBIN) GO111MODULE=on go install sigs.k8s.io/kustomize/kustomize/v5@$(KUSTOMIZE_VERSION)
+	$(call go-install-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v5,$(KUSTOMIZE_VERSION))
 
 .PHONY: controller-gen
-controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.
+controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
 $(CONTROLLER_GEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
-	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen,$(CONTROLLER_TOOLS_VERSION))
 
 .PHONY: envtest
-envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
+envtest: $(ENVTEST) ## Download setup-envtest locally if necessary.
 $(ENVTEST): $(LOCALBIN)
-	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@$(ENVTEST_VERSION)
+	$(call go-install-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest,$(ENVTEST_VERSION))
+
+.PHONY: govulncheck-bin
+govulncheck-bin: $(GOVULNCHECK) ## Download govulncheck locally if necessary.
+$(GOVULNCHECK): $(LOCALBIN)
+	$(call go-install-tool,$(GOVULNCHECK),golang.org/x/vuln/cmd/govulncheck,$(GOVULNCHECK_VERSION))
+
+.PHONY: golangci-lint-bin
+golangci-lint-bin: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
+$(GOLANGCI_LINT): $(LOCALBIN)
+	wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(LOCALBIN) $(GOLANGCI_LINT_VERSION)
+	mv $(LOCALBIN)/golangci-lint $(GOLANGCI_LINT)
+
+.PHONY: helm-docs-bin
+helm-docs-bin: $(HELM_DOCS) ## Download helm-docs locally if necessary.
+$(HELM_DOCS): $(LOCALBIN)
+	$(call go-install-tool,$(HELM_DOCS),github.com/norwoodj/helm-docs/cmd/helm-docs,$(HELM_DOCS_VERSION))
 
 .PHONY: operator-sdk
 OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
@@ -189,12 +219,20 @@ endif
 
 .PHONY: install-dev
 install-dev: ## Install binaries for development environment.
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	go install github.com/norwoodj/helm-docs/cmd/helm-docs@latest
-	go install golang.org/x/vuln/cmd/govulncheck@latest
 	go install github.com/go-delve/delve/cmd/dlv@latest
 	go install sigs.k8s.io/kind@latest
 	go install sigs.k8s.io/cloud-provider-kind@latest
+
+.PHONY: helm-validate
+helm-validate: helm-dependency-update helm-lint ## Validate Helm charts.
+
+.PHONY: helm-docs
+helm-docs: helm-docs-bin ## Run helm-docs.
+	$(HELM_DOCS) --chart-search-root=helm
+
+.PHONY: helm-lint
+helm-lint: ## Lint Helm charts.
+	find "helm/" -depth -mindepth 1 -maxdepth 1 -type d -print0 | xargs -0r -n1 helm lint --strict
 
 .PHONY: helm-dependency-update
 helm-dependency-update: ## Update Helm chart dependencies.
@@ -231,7 +269,21 @@ get-u: ## Run `go get -u`
 vet: ## Run go vet against code.
 	go vet ./...
 
-CODECOV_PERCENT ?= 50.0
+.PHONY: govulncheck
+govulncheck: govulncheck-bin ## Run govulncheck
+	$(GOVULNCHECK) ./...
+
+# https://github.com/golangci/golangci-lint/blob/main/.pre-commit-hooks.yaml
+.PHONY: golangci-lint
+golangci-lint: golangci-lint-bin ## Run golangci-lint.
+	$(GOLANGCI_LINT) run --new-from-rev HEAD --fix
+
+# https://github.com/golangci/golangci-lint/blob/main/.pre-commit-hooks.yaml
+.PHONY: golangci-lint-fmt
+golangci-lint-fmt: golangci-lint-bin ## Run golangci-lint fmt.
+	$(GOLANGCI_LINT) fmt
+
+CODECOV_PERCENT ?= 74.0
 
 .PHONY: test
 test: envtest ## Run tests.
@@ -246,14 +298,6 @@ test: envtest ## Run tests.
 			echo "Total test coverage ($${percentage}%) is less than the coverage threshold ($(CODECOV_PERCENT)%)."; \
 			exit 1; \
 		fi
-
-.PHONY: vuln-scan
-vuln-scan: ## Run vulnerability scanning tool
-	GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@latest
-	govulncheck ./... > govulnreport.txt 2>&1 || echo "Found vulnerabilities.  Details in govulnreport.txt"
-
-.PHONY: audit  # TODO: add in get-u after libraries have been updated
-audit: fmt tidy vet vuln-scan ## Run testing tools
 
 .PHONY: helmtest
 helmtest:

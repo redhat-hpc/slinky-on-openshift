@@ -34,7 +34,7 @@ func SlowStartBatch(count, initialBatchSize int, fn func(index int) error) (int,
 		errCh := make(chan error, batchSize)
 		var wg sync.WaitGroup
 		wg.Add(batchSize)
-		for i := 0; i < batchSize; i++ {
+		for range batchSize {
 			go func(idx int) {
 				defer wg.Done()
 				if err := fn(idx); err != nil {

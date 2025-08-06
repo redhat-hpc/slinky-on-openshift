@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: Copyright (C) SchedMD LLC.
 SPDX-License-Identifier: Apache-2.0
 */}}
 
-{{- if and .Values.accounting.enabled .Values.mariadb.enabled -}}
+{{- if and .Values.accounting.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -28,11 +28,18 @@ data:
     #
     ### STORAGE ###
     StorageType=accounting_storage/mysql
+    {{- if .Values.accounting.external.enabled }}
+    StorageHost={{- .Values.accounting.external.host }}
+    StorageUser={{- .Values.accounting.external.user }}
+    StorageLoc={{- .Values.accounting.external.database }}
+    StoragePort={{- .Values.accounting.external.port }}
+    {{- else }}{{- /* if .Values.accounting.external.enabled */}}
     StorageHost={{- template "mariadb.primary.fullname" .Subcharts.mariadb }}
     StorageUser={{- .Values.mariadb.auth.username }}
-    StoragePass=$MARIADB_PASSWORD
     StorageLoc={{- .Values.mariadb.auth.database }}
     StoragePort={{- default .Values.mariadb.primary.service.ports.mysql 3306 }}
+    {{- end }}{{- /* if .Values.accounting.external.enabled */}}
+    StoragePass=$MARIADB_PASSWORD
     #
     ### LOGGING ###
     LogFile=/dev/null
@@ -40,10 +47,6 @@ data:
     {{- with .Values.slurm.extraSlurmdbdConf }}
     #
     ### EXTRA CONFIG ###
-    {{- range $key, $val := . }}
-    {{- if $val }}
-    {{ $key }}={{ $val | join "," }}
-    {{- end }}{{- /* if $val */}}
-    {{- end }}{{- /* range $key, $val := . */}}
+    {{- include "expand-map" . | nindent 4 }}
     {{- end }}{{- /* with .Values.slurm.extraSlurmdbdConf */}}
-{{- end }}
+{{- end }}{{- /* if and .Values.accounting.enabled */}}

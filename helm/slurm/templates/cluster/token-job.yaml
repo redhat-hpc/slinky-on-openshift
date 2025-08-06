@@ -15,7 +15,6 @@ spec:
   template:
     metadata:
       annotations:
-        helm.sh/hook: post-install,post-upgrade
         kubectl.kubernetes.io/default-container: {{ printf "token-%s" (include "slurm.user" .) }}
       labels:
         {{- include "slurm.token.labels" . | nindent 8 }}
@@ -25,6 +24,14 @@ spec:
       dnsConfig:
         {{- include "slurm.dnsConfig" . | nindent 8 }}
       {{- include "slurm.imagePullSecrets" . | nindent 6 }}
+      {{- with .Values.controller.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with .Values.controller.affinity */}}
+      {{- with .Values.controller.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with .Values.controller.tolerations */}}
       initContainers:
         - name: init
           image: {{ include "slurm.authcred.imageRef" . }}

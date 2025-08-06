@@ -65,7 +65,7 @@ func newPod(now metav1.Time, ready bool, beforeSec int) *corev1.Pod {
 			Conditions: []corev1.PodCondition{
 				{
 					Type:               corev1.PodReady,
-					LastTransitionTime: metav1.NewTime(now.Time.Add(-1 * time.Duration(beforeSec) * time.Second)),
+					LastTransitionTime: metav1.NewTime(now.Add(-1 * time.Duration(beforeSec) * time.Second)),
 					Status:             conditionStatus,
 				},
 			},

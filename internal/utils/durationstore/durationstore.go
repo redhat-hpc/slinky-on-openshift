@@ -18,7 +18,7 @@ type DurationStore struct {
 	eval func(oldDur, newDur time.Duration) bool
 }
 
-// NewDurationStore() returns a duration store which will evalute which value to
+// NewDurationStore() returns a duration store which will evaluate which value to
 // keep, when multiple are pushed to the same key, based on the eval() function.
 func NewDurationStore(eval func(oldDur, newDur time.Duration) bool) *DurationStore {
 	return &DurationStore{eval: eval}
@@ -37,7 +37,7 @@ func Less(oldDur, newDur time.Duration) bool {
 // DurationStore.eval() is kept.
 func (dm *DurationStore) Push(key string, newDur time.Duration) {
 	newD := &duration{dur: newDur}
-	val, loaded := dm.Map.LoadOrStore(key, newD)
+	val, loaded := dm.LoadOrStore(key, newD)
 	if !loaded {
 		return
 	}
@@ -45,8 +45,8 @@ func (dm *DurationStore) Push(key string, newDur time.Duration) {
 	if !ok {
 		// edge case: corrupt stored duration
 		// recover: delete key and store new duration
-		dm.Map.Delete(key)
-		dm.Map.Store(key, newD)
+		dm.Delete(key)
+		dm.Store(key, newD)
 		return
 	}
 	d.Update(newDur, dm.eval)
@@ -55,7 +55,7 @@ func (dm *DurationStore) Push(key string, newDur time.Duration) {
 // Pop() will return the duration stored by the key and delete the store. If no
 // duration was stored for that key, then 0 will be returned.
 func (dm *DurationStore) Pop(key string) time.Duration {
-	val, ok := dm.Map.LoadAndDelete(key)
+	val, ok := dm.LoadAndDelete(key)
 	if !ok {
 		// Nothing was stored, return 0
 		return 0
@@ -72,7 +72,7 @@ func (dm *DurationStore) Pop(key string) time.Duration {
 // Peek() will return the duration stored by the key and *not* delete the store.
 // If no duration was stored for that key, then 0 will be returned.
 func (dm *DurationStore) Peek(key string) time.Duration {
-	val, ok := dm.Map.Load(key)
+	val, ok := dm.Load(key)
 	if !ok {
 		// Nothing was stored, return 0
 		return 0

@@ -47,14 +47,6 @@ spec:
       automountServiceAccountToken: false
       dnsConfig:
         {{- include "slurm.dnsConfig" $ | nindent 8 }}
-      {{- with $nodeset.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{- /* with $nodeset.nodeSelector */}}
-      {{- with $nodeset.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{- /* with $nodeset.affinity */}}
       {{- include "slurm.imagePullSecrets" $ | nindent 6 }}
       initContainers:
         - name: init
@@ -112,34 +104,29 @@ spec:
               add:
                 {{- include "slurm.compute.capabilities" $ | nindent 16 }}
           imagePullPolicy: {{ $nodeset.imagePullPolicy | default (include "slurm.imagePullPolicy" $) }}
-          {{- if not $nodeset.resources }}
-            {{- fail "Slurm compute nodes require resources spec." -}}
-          {{- else }}{{- /* if not $nodeset.resources */}}
+          {{- with $nodeset.resources }}
           resources:
-            {{- $nodeset.resources | toYaml | nindent 12 }}
-          {{- end }}{{- /* if not $nodeset.resources */}}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}{{- /* with $nodeset.resources */}}
+          {{- if $nodeset.useResourceLimits }}
+          env:
+            - name: POD_CPUS
+              value: {{ include "slurm.compute.podCpus" $nodeset | toString | quote }}
+            - name: POD_MEMORY
+              value: {{ include "slurm.compute.podMemory" $nodeset | toString | quote }}
+          {{- end }}{{- /* if $nodeset.useResourceLimits */}}
           args:
             - -Z
             - --conf-server
             - {{ printf "%s:%s" (include "slurm.controller.name" $) (include "slurm.controller.port" $) }}
             - --conf
-            - >-
-              {{ print "'" -}}
-              Features={{- join "," (prepend (default (list) $nodeset.nodeFeatures) $nodeset.name) }}
-              {{- if $nodeset.nodeGres }}
-              Gres={{- $nodeset.nodeGres }}
-              {{- end }}
-              Weight={{- default 1 $nodeset.nodeWeight }}
-              {{- print "'" }}
+            - {{ include "slurm.compute.conf" $nodeset }}
           ports:
             - name: slurmd
               containerPort: {{ include "slurm.compute.port" $ }}
           readinessProbe:
-            exec:
-              command:
-                - scontrol
-                - show
-                - slurmd
+            tcpSocket:
+              port: slurmd
           lifecycle:
             preStop:
               exec:
@@ -162,6 +149,14 @@ spec:
             {{- with $nodeset.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}{{- /* with $nodeset.extraVolumeMounts */}}
+      {{- with $nodeset.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with $nodeset.nodeSelector */}}
+      {{- with $nodeset.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with $nodeset.affinity */}}
       {{- with $nodeset.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
@@ -185,7 +180,7 @@ spec:
         {{- end }}{{- /* with $nodeset.extraVolumes */}}
   {{- with $nodeset.volumeClaimTemplates }}
   volumeClaimTemplates:
-    {{- toYaml . | nindent 4 }}
+    {{- toYaml (omit . "mountPath") | nindent 4 }}
   {{- end }}{{- /* with $nodeset.volumeClaimTemplates */}}
 {{- end }}{{- /* if $nodeset.enabled */}}
 {{- end }}{{- /* range $nodeset := .Values.compute.nodesets */}}

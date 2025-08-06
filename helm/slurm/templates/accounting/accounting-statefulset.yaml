@@ -7,6 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 {{- if and (not .Values.accounting.external.enabled) (not .Values.mariadb.enabled) }}
   {{- fail "Incompatible configuration: `accounting.enabled=true`; `accounting.external.enabled=false`; `mariadb.enabled=false`. Either set `accounting.enabled=false`, `accounting.external.enabled=true`, or `mariadb.enabled=true`." }}
 {{- end }}{{- /* if and (not .Values.accounting.external.enabled) (not .Values.mariadb.enabled) */}}
+{{- if and .Values.accounting.external.enabled .Values.mariadb.enabled }}
+  {{- fail "Incompatible configuration: `accounting.enabled=true`; `accounting.external.enabled=true`; `mariadb.enabled=true`. Either set `accounting.external.enabled=false`, or `mariadb.enabled=false`." }}
+{{- end }}{{- /* if and .Values.accounting.external.enabled .Values.mariadb.enabled */}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -15,16 +18,11 @@ metadata:
   labels:
     {{- include "slurm.accounting.labels" . | nindent 4 }}
 spec:
-  podManagementPolicy: Parallel
   revisionHistoryLimit: 0
   serviceName: {{ include "slurm.accounting.name" . }}
   selector:
     matchLabels:
       {{- include "slurm.accounting.selectorLabels" . | nindent 6 }}
-  updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
   template:
     metadata:
       annotations:
@@ -35,10 +33,6 @@ spec:
       hostname: {{ include "slurm.accounting.name" . }}
       priorityClassName: {{ .Values.accounting.priorityClassName | default .Values.priorityClassName }}
       automountServiceAccountToken: false
-      {{- with .Values.accounting.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{- /* with .Values.accounting.affinity */}}
       {{- include "slurm.imagePullSecrets" $ | nindent 6 }}
       initContainers:
         - name: init
@@ -54,7 +48,7 @@ spec:
             - name: MARIADB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "mariadb.secretName" .Subcharts.mariadb }}
+                  name: {{ include "slurm.accounting.secretName" . }}
                   key: mariadb-password
           command:
             - tini
@@ -86,6 +80,14 @@ spec:
               port: slurmdbd
           volumeMounts:
             {{- include "slurm.volumeMounts" . | nindent 12 }}
+      {{- with .Values.accounting.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with .Values.accounting.nodeSelector */}}
+      {{- with .Values.accounting.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with .Values.accounting.affinity */}}
       {{- with .Values.accounting.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}

@@ -132,6 +132,5 @@ $RECYCLE.BIN/
 go.work.sum
 Dockerfile.cross
 vendor/*
-govulnreport.txt
 *.tgz
 values-*.yaml

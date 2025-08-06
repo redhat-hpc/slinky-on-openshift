@@ -11,16 +11,11 @@ metadata:
   labels:
     {{- include "slurm.controller.labels" . | nindent 4 }}
 spec:
-  podManagementPolicy: Parallel
   revisionHistoryLimit: 0
   serviceName: {{ include "slurm.controller.name" . }}
   selector:
     matchLabels:
       {{- include "slurm.controller.selectorLabels" . | nindent 6 }}
-  updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
   template:
     metadata:
       annotations:
@@ -30,10 +25,6 @@ spec:
     spec:
       priorityClassName: {{ .Values.controller.priorityClassName | default .Values.priorityClassName }}
       automountServiceAccountToken: false
-      {{- with .Values.controller.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{- /* with .Values.controller.affinity */}}
       {{- include "slurm.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: init
@@ -60,6 +51,30 @@ spec:
             {{- include "slurm.init.volumeMounts" . | nindent 12 }}
             - name: {{ include "slurm.controller.statesave.name" . }}
               mountPath: {{ include "slurm.controller.statesavePath" . }}
+        - name: logfile
+          image: {{ include "slurm.authcred.imageRef" . }}
+          imagePullPolicy: {{ .Values.authcred.imagePullPolicy | default (include "slurm.imagePullPolicy" $) }}
+          restartPolicy: Always
+          env:
+            - name: SOCKET
+              value: {{ include "slurm.controller.logFile" . }}
+          command:
+            - tini
+            - -g
+            - --
+            - bash
+            - -c
+            - |
+              {{- range .Files.Lines "scripts/socket-logger.sh" }}
+              {{ . }}
+              {{- end }}{{- /* range .Files.Lines "scripts/socket-logger.sh" */}}
+          {{- with .Values.authcred.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}{{- /* with .Values.authcred.resources */}}
+          volumeMounts:
+            - name: slurm-log
+              mountPath: /var/log/slurm
       containers:
         - name: slurmctld
           image: {{ include "slurm.controller.imageRef" . }}
@@ -78,6 +93,8 @@ spec:
               port: slurmctld
           volumeMounts:
             {{- include "slurm.volumeMounts" . | nindent 12 }}
+            - name: slurm-log
+              mountPath: /var/log/slurm
             - name: authsocket
               mountPath: /run/slurmctld
             - name: {{ include "slurm.controller.statesave.name" . }}
@@ -106,6 +123,14 @@ spec:
             {{- include "slurm.init.volumeMounts" . | nindent 12 }}
             - name: authsocket
               mountPath: /run/slurmctld
+      {{- with .Values.controller.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with .Values.controller.nodeSelector */}}
+      {{- with .Values.controller.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{- /* with .Values.controller.affinity */}}
       {{- with .Values.controller.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
@@ -122,6 +147,9 @@ spec:
                   name: {{ include "slurm.auth.secretName" . }}
               - secret:
                   name: {{ include "slurm.jwt.hs256.secretName" . }}
+        - name: slurm-log
+          emptyDir:
+            medium: Memory
         - name: authsocket
           emptyDir: {}
         {{- if and .Values.controller.persistence.enabled .Values.controller.persistence.existingClaim }}

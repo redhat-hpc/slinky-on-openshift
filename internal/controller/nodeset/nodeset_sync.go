@@ -44,7 +44,7 @@ func (r *NodeSetReconciler) Sync(ctx context.Context, req reconcile.Request) err
 	if err := r.Get(ctx, req.NamespacedName, nodeset); err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.V(3).Info("NodeSet has been deleted.", "request", req)
-			r.expectations.DeleteExpectations(logger, req.NamespacedName.String())
+			r.expectations.DeleteExpectations(logger, req.String())
 			return nil
 		}
 		return err
@@ -216,7 +216,7 @@ func (r *NodeSetReconciler) canAdoptFunc(nodeset *slinkyv1alpha1.NodeSet) func(c
 	})
 }
 
-// sync is the main reconcilation logic.
+// sync is the main reconciliation logic.
 func (r *NodeSetReconciler) sync(
 	ctx context.Context,
 	nodeset *slinkyv1alpha1.NodeSet,
@@ -388,7 +388,7 @@ func (r *NodeSetReconciler) doPodScaleOut(
 	if skippedPods := numCreate - successfulCreations; skippedPods > 0 {
 		logger.V(2).Info("Slow-start failure. Skipping creation of pods, decrementing expectations",
 			"podsSkipped", skippedPods, "kind", slinkyv1alpha1.NodeSetGVK, "nodeset", klog.KObj(nodeset))
-		for i := 0; i < skippedPods; i++ {
+		for range skippedPods {
 			// Decrement the expected number of creates because the informer won't observe this pod
 			r.expectations.CreationObserved(logger, key)
 		}
@@ -527,9 +527,9 @@ func (r *NodeSetReconciler) doPodProcessing(
 	logger := log.FromContext(ctx)
 	key := utils.KeyFunc(nodeset)
 
-	// NOTE: we must repect the uncordon and undrain nodes in accordance with updateStrategy
+	// NOTE: we must respect the uncordon and undrain nodes in accordance with updateStrategy
 	// to not fight it given the statefulness of how we cordon and terminate nodeset pods.
-	_, podsToKeep := r.splitUpdatePods(nodeset, pods, hash)
+	_, podsToKeep := r.splitUpdatePods(ctx, nodeset, pods, hash)
 	uncordonFn := func(i int) error {
 		pod := podsToKeep[i]
 		return r.makePodUncordonAndUndrain(ctx, nodeset, pod)
@@ -683,7 +683,18 @@ func (r *NodeSetReconciler) syncRollingUpdate(
 ) error {
 	logger := log.FromContext(ctx)
 
-	podsToDelete, _ := r.splitUpdatePods(nodeset, pods, hash)
+	_, oldPods := findUpdatedPods(pods, hash)
+
+	unhealthyPods, healthyPods := nodesetutils.SplitUnhealthyPods(oldPods)
+	if len(unhealthyPods) > 0 {
+		logger.Info("Delete unhealthy pods for Rolling Update",
+			"unhealthyPods", len(unhealthyPods))
+		if err := r.doPodScaleIn(ctx, nodeset, unhealthyPods, nil); err != nil {
+			return err
+		}
+	}
+
+	podsToDelete, _ := r.splitUpdatePods(ctx, nodeset, healthyPods, hash)
 	if len(podsToDelete) > 0 {
 		logger.Info("Scale-in pods for Rolling Update",
 			"nodeset", klog.KObj(nodeset), "delete", len(podsToDelete))
@@ -697,17 +708,22 @@ func (r *NodeSetReconciler) syncRollingUpdate(
 
 // splitUpdatePods returns two pod lists based on UpdateStrategy type.
 func (r *NodeSetReconciler) splitUpdatePods(
+	ctx context.Context,
 	nodeset *slinkyv1alpha1.NodeSet,
 	pods []*corev1.Pod,
 	hash string,
 ) (podsToDelete, podsToKeep []*corev1.Pod) {
+	logger := log.FromContext(ctx)
+
 	switch nodeset.Spec.UpdateStrategy.Type {
 	case slinkyv1alpha1.OnDeleteNodeSetStrategyType:
 		return nil, nil
 	case slinkyv1alpha1.RollingUpdateNodeSetStrategyType:
+		newPods, oldPods := findUpdatedPods(pods, hash)
+
 		var numUnavailable int
 		now := metav1.Now()
-		for _, pod := range pods {
+		for _, pod := range newPods {
 			if !podutil.IsPodAvailable(pod, nodeset.Spec.MinReadySeconds, now) {
 				numUnavailable++
 			}
@@ -716,13 +732,16 @@ func (r *NodeSetReconciler) splitUpdatePods(
 		total := int(ptr.Deref(nodeset.Spec.Replicas, 0))
 		maxUnavailable := utils.GetScaledValueFromIntOrPercent(nodeset.Spec.UpdateStrategy.RollingUpdate.MaxUnavailable, total, true, 1)
 		remainingUnavailable := utils.Clamp((maxUnavailable - numUnavailable), 0, maxUnavailable)
-		newPods, oldPods := findUpdatedPods(pods, hash)
 		podsToDelete, remainingOldPods := nodesetutils.SplitActivePods(oldPods, remainingUnavailable)
 
 		remainingPods := make([]*corev1.Pod, len(newPods))
 		copy(remainingPods, newPods)
 		remainingPods = append(remainingPods, remainingOldPods...)
 
+		logger.V(1).Info("calculated pod lists for update",
+			"maxUnavailable", maxUnavailable,
+			"updatePods", len(podsToDelete),
+			"remainingPods", len(remainingPods))
 		return podsToDelete, remainingPods
 	default:
 		return nil, nil

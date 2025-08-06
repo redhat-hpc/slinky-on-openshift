@@ -66,9 +66,9 @@ being run and the resources available in the cluster.
 
 ### NodeSet Scale Subresource
 
-Scaling a resource in Kuberenetes requires that resources such as Deployments
-and StatefulSets support the [scale subresource]. This is also true of the
-NodeSet Custom Resource.
+Scaling a resource in Kubernetes requires that resources such as Deployments and
+StatefulSets support the [scale subresource]. This is also true of the NodeSet
+Custom Resource.
 
 The scale subresource gives a standard interface to observe and control the
 number of replicas of a resource. In the case of NodeSet, it allows Kubernetes

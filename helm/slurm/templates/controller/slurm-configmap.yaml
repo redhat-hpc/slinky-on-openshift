@@ -4,8 +4,8 @@ SPDX-License-Identifier: Apache-2.0
 */}}
 
 {{- $nodesetList := list "ALL" -}}
-{{- $failList := list "slurm.conf" "slurmdbd.conf" "cgroup.conf" -}}
-{{- $allowList := list "acct_gather.conf" "burst_buffer.conf" "gres.conf" "helpers.conf" "job_container.conf" "mpi.conf" "oci.conf" "plugstack.conf" "topology.conf" -}}
+{{- $failList := list "slurm.conf" "slurmdbd.conf" -}}
+{{- $allowList := list "acct_gather.conf" "burst_buffer.conf" "cgroup.conf" "gres.conf" "helpers.conf" "job_container.conf" "mpi.conf" "oci.conf" "plugstack.conf" "topology.conf" -}}
 {{- $partitionList := list -}}
 apiVersion: v1
 kind: ConfigMap
@@ -43,8 +43,8 @@ data:
     {{- end }}{{- /* if or .Values.slurm.prologScripts .Values.slurm.epilogScripts */}}
     #
     ### LOGGING ###
-    SlurmctldLogFile=/dev/null
-    SlurmSchedLogFile=/dev/null
+    SlurmctldLogFile={{- include "slurm.controller.logFile" . }}
+    SlurmSchedLogFile={{- include "slurm.controller.logFile" . }}
     SlurmdLogFile={{- include "slurm.compute.logFile" . }}
     LogTimeFormat=iso8601_ms,format_stderr
     #
@@ -56,25 +56,20 @@ data:
     AuthAltParameters=jwt_key={{- include "slurm.jwt.hs256.fullPath" . }}
     CommunicationParameters=block_null_hash
     LaunchParameters=enable_nss_slurm,use_interactive_step,ulimit_pam_adopt
-    ProctrackType=proctrack/linuxproc
+    ProctrackType=proctrack/cgroup
     SelectTypeParameters=CR_Core_Memory
     SlurmctldParameters=enable_configless,enable_stepmgr
-    TaskPlugin=task/affinity
+    TaskPlugin=task/cgroup,task/affinity
     PrologFlags=Contain
     #
     ### ACCOUNTING ###
     {{- if .Values.accounting.enabled }}
-    JobAcctGatherType=jobacct_gather/linux
+    JobAcctGatherType=jobacct_gather/cgroup
     JobAcctGatherFrequency=task=30
     AccountingStorageTRES=gres/gpu
     AccountingStorageType=accounting_storage/slurmdbd
-    {{- if .Values.accounting.external.enabled }}
-    AccountingStorageHost={{- .Values.accounting.external.host }}
-    AccountingStoragePort={{- .Values.accounting.external.port }}
-    {{- else }}{{- /* if .Values.accounting.external.enabled */}}
     AccountingStorageHost={{- include "slurm.accounting.name" . }}
     AccountingStoragePort={{- include "slurm.accounting.port" . }}
-    {{- end }}{{- /* if .Values.accounting.external.enabled */}}
     {{- else }}{{- /* if .Values.accounting.enabled */}}
     JobAcctGatherType=jobacct_gather/none
     AccountingStorageType=accounting_storage/none
@@ -122,14 +117,8 @@ data:
     {{- with .Values.slurm.extraSlurmConf }}
     #
     ### EXTRA CONFIG ###
-    {{- range $key, $val := . }}
-    {{- if $val }}
-    {{ $key }}={{ $val | join "," }}
-    {{- end }}{{- /* if $val */}}
-    {{- end }}{{- /* range $key, $val := . */}}
+    {{- include "expand-map" . | nindent 4 }}
     {{- end }}{{- /* with .Values.slurm.extraSlurmConf */}}
-  cgroup.conf: |
-    CgroupPlugin=disabled
   {{- range $key, $val := .Values.slurm.configFiles -}}
   {{- if or (has $key $failList) (not (has $key $allowList)) }}
   {{- fail (printf "configFiles cannot contain `%s`: either is not a valid config file or is reserved for chart use" $key) }}

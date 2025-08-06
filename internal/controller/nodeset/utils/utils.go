@@ -167,8 +167,8 @@ func IsStorageMatch(nodeset *slinkyv1alpha1.NodeSet, pod *corev1.Pod) bool {
 	for _, claim := range nodeset.Spec.VolumeClaimTemplates {
 		volume, found := volumes[claim.Name]
 		if !found ||
-			volume.VolumeSource.PersistentVolumeClaim == nil ||
-			volume.VolumeSource.PersistentVolumeClaim.ClaimName !=
+			volume.PersistentVolumeClaim == nil ||
+			volume.PersistentVolumeClaim.ClaimName !=
 				GetPersistentVolumeClaimName(nodeset, &claim, ordinal) {
 			return false
 		}

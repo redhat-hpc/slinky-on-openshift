@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	corev1 "k8s.io/api/core/v1"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	slinkyv1alpha1 "github.com/SlinkyProject/slurm-operator/api/v1alpha1"
@@ -160,10 +161,10 @@ func TestSortingActivePods(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			numPods := len(test.pods)
 
-			for i := 0; i < 20; i++ {
+			for range 20 {
 				idx := rand.Perm(numPods)
 				randomizedPods := make([]*corev1.Pod, numPods)
-				for j := 0; j < numPods; j++ {
+				for j := range numPods {
 					randomizedPods[j] = &test.pods[idx[j]]
 				}
 
@@ -308,6 +309,75 @@ func TestSplitActivePods(t *testing.T) {
 			}
 			if diff := cmp.Diff(tt.wantPods2Names, gotPods2Names); diff != "" {
 				t.Errorf("Sorted active pod names (-want,+got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestSplitUnhealthyPods(t *testing.T) {
+	type args struct {
+		pods []*corev1.Pod
+	}
+	tests := []struct {
+		name              string
+		args              args
+		wantUnhealthyPods []*corev1.Pod
+		wantHealthyPods   []*corev1.Pod
+	}{
+		{
+			name: "empty",
+			args: args{
+				pods: nil,
+			},
+			wantUnhealthyPods: []*corev1.Pod{},
+			wantHealthyPods:   []*corev1.Pod{},
+		},
+		{
+			name: "mixed",
+			args: args{
+				pods: []*corev1.Pod{
+					{
+						ObjectMeta: metav1.ObjectMeta{Name: "pod1"},
+						Status:     corev1.PodStatus{Phase: corev1.PodPending},
+					},
+					{
+						ObjectMeta: metav1.ObjectMeta{Name: "pod2"},
+						Status: corev1.PodStatus{
+							Phase: corev1.PodRunning,
+							Conditions: []corev1.PodCondition{
+								{Type: corev1.PodReady, Status: corev1.ConditionTrue},
+							},
+						},
+					},
+				},
+			},
+			wantUnhealthyPods: []*corev1.Pod{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "pod1"},
+					Status:     corev1.PodStatus{Phase: corev1.PodPending},
+				},
+			},
+			wantHealthyPods: []*corev1.Pod{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "pod2"},
+					Status: corev1.PodStatus{
+						Phase: corev1.PodRunning,
+						Conditions: []corev1.PodCondition{
+							{Type: corev1.PodReady, Status: corev1.ConditionTrue},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotUnhealthyPods, gotHealthyPods := SplitUnhealthyPods(tt.args.pods)
+			if !apiequality.Semantic.DeepEqual(gotUnhealthyPods, tt.wantUnhealthyPods) {
+				t.Errorf("SplitUnhealthyPods() gotUnhealthyPods = %v, want %v", gotUnhealthyPods, tt.wantUnhealthyPods)
+			}
+			if !apiequality.Semantic.DeepEqual(gotHealthyPods, tt.wantHealthyPods) {
+				t.Errorf("SplitUnhealthyPods() gotHealthyPods = %v, want %v", gotHealthyPods, tt.wantHealthyPods)
 			}
 		})
 	}

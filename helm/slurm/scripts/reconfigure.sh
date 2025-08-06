@@ -30,8 +30,12 @@ function reconfigure() {
 	export SLURM_CONF="$SLURM_MOUNT/slurm.conf"
 
 	# Issue cluster reconfigure request
-	echo "[$(date)] Reconfiguring Slurm"
-	scontrol reconfigure
+	echo "[$(date)] Reconfiguring Slurm..."
+	until scontrol reconfigure; do
+		echo "[$(date)] Failed to reconfigure, try again..."
+		sleep 2
+	done
+	echo "[$(date)] DONE"
 	INIT_RECONFIGURE=true
 }
 

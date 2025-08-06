@@ -2,7 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## \[Unreleased\]
+## [Unreleased]
+
+### Added
+
+### Fixed
+
+### Changed
+
+### Removed
+
+## v0.3.0
 
 ### Added
 
@@ -13,6 +23,11 @@ All notable changes to this project will be documented in this file.
 - Added login nodes to the Slurm chart.
 - Added Slurm chart controller service configuration options.
 - Added login node capabilities for chroot.
+- Added `cgroup.conf` as configurable and cgroups is enabled by default.
+- Added `nodeSelector` options to all Slurm components.
+- Added `compute.nodesets[].useResourceLimits` option.
+- Added tolerations and affinity to reconfigure and token jobs.
+- Added `login.securityContext` option.
 
 ### Fixed
 
@@ -32,6 +47,10 @@ All notable changes to this project will be documented in this file.
 - Fixed incorrect mount top symlinked `/var/run`, instead of `/run`.
 - Fixed regression where slurmd's would not register with all dynamic conf items
   (e.g. Features, Gres, Weight, etc..).
+- Fixed operator and operator-webhook not using affinity in values.yaml.
+- Fixed nodeset controller failing to apply a rolling update when there are too
+  many unhealthy pods.
+- Fixed update strategies employing `Recreate` when unnecessary.
 
 ### Changed
 
@@ -45,6 +64,14 @@ All notable changes to this project will be documented in this file.
 - Changed partition config expression to `map[string]string` or
   `map[string][]string`.
 - Changed slurm-operator chart images tags, omit when equal to the default.
+- Changed `ttlSecondsAfterFinished` to `helm.sh/hook-delete-policy`.
+- Changed `accounting.external` to work with external database.
+- Changed fields `existingSecret` to `secretName`.
+- Changed `compute.nodesets[].resources` to allow empty resources.
+- Changed how `compute.nodeset[]` expresses gres, weight, and features.
+- Changed default `login.securityContext`, omit SYS_CHROOT.
+- Changed Slurm version to 25.05
+- Changed slurm-client to 0.3.0
 
 ### Removed
 

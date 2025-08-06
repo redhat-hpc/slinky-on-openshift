@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # https://skaffold.dev/docs/references/yaml/
-apiVersion: skaffold/v4beta1
+apiVersion: skaffold/v4beta13
 kind: Config
 profiles:
   - name: dev
@@ -12,11 +12,13 @@ profiles:
         - image: slinky.slurm.net/slurm-operator
           context: ../../
           docker:
-            dockerfile: ./build/slurm-operator/Dockerfile
+            dockerfile: Dockerfile
+            target: manager
         - image: slinky.slurm.net/slurm-operator-webhook
           context: ../../
           docker:
-            dockerfile: ./build/slurm-operator-webhook/Dockerfile
+            dockerfile: Dockerfile
+            target: webhook
     deploy:
       helm:
         releases:
