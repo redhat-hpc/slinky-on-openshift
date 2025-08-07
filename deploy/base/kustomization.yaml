@@ -1,0 +1,7 @@
+resources:
+  - scc.yaml
+  - ns.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: slurm

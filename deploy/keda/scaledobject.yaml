@@ -1,0 +1,26 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: scale-debug
+  namespace: slurm
+spec:
+  scaleTargetRef:
+    apiVersion: slinky.slurm.net/v1alpha1
+    kind: NodeSet
+    name: slurm-compute-debug
+  idleReplicaCount: 0
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  triggers:
+    - type: prometheus
+      metricType: Value
+      metadata:
+        serverAddress: https://thanos-querier.openshift-monitoring.svc.cluster.local:9092
+        namespace: slurm
+        metricName: slurm_partition_max_pending_nodes
+        query: slurm_partition_max_pending_nodes{partition="all"}
+        threshold: "1"
+        authModes: bearer
+      authenticationRef:
+        name: keda-trigger-auth-prometheus
+        kind: TriggerAuthentication

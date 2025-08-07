@@ -4,6 +4,8 @@
 
 ```
 git subtree pull --squash --prefix=upstream/slurm-operator git@github.com:kincl/slurm-operator.git match-resources
+# or
+git subtree pull --squash --prefix=upstream/slurm-operator https://github.com/SlinkyProject/slurm-operator.git v0.3.0
 ```
 
 ```
