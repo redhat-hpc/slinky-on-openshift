@@ -8,3 +8,5 @@ labels:
       app.kubernetes.io/component: homearea
     includeSelectors: true
     includeTemplates: true
+
+namespace: slurm

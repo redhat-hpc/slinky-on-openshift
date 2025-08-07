@@ -13,3 +13,5 @@ labels:
       app.kubernetes.io/component: keda
     includeSelectors: true
     includeTemplates: true
+
+namespace: slurm

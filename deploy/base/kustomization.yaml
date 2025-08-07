@@ -1,7 +1,11 @@
 resources:
   - scc.yaml
   - ns.yaml
+  - clusterrole.yaml
+  - rolebinding.yaml
 
 labels:
   - pairs:
       app.kubernetes.io/name: slurm
+
+namespace: slurm

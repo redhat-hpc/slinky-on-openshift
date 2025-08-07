@@ -5,8 +5,7 @@ metadata:
 
 priority: 10
 users: []
-groups:
-- system:serviceaccounts:slurm
+groups: []
 
 allowHostDirVolumePlugin: false
 allowHostIPC: false

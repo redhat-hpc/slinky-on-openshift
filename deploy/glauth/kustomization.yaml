@@ -9,3 +9,5 @@ labels:
       app.kubernetes.io/component: glauth
     includeSelectors: true
     includeTemplates: true
+
+namespace: slurm
