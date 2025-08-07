@@ -2,7 +2,8 @@ resources:
   - scc.yaml
   - ns.yaml
   - clusterrole.yaml
-  - rolebinding.yaml
+  - rolebinding-scc-nonroot.yaml
+  - rolebinding-scc-slurm.yaml
 
 labels:
   - pairs:

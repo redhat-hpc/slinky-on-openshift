@@ -6,6 +6,8 @@ mariadb:
   primary:
     persistence:
       storageClass: null
+    containerSecurityContext:
+      seLinuxOptions: null
 
 authcred:
   image:
@@ -16,7 +18,7 @@ login:
   enabled: true
 
   image:
-    repository: quay.io/slinky-on-openshift/login
+    repository: quay.io/slinky-on-openshift/login-extra
     tag: '25.05'
 
   service:
@@ -35,6 +37,9 @@ login:
         ldap_default_authtok: mysecret
 
         ldap_access_filter: (memberOf=ou=users,ou=groups,dc=example,dc=com)
+
+  securityContext:
+    runAsUser: 0
 
 compute:
   image:

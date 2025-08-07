@@ -5,12 +5,16 @@ Images are built on top of CentOS Stream and are available on [quay.io](https://
 
 ## Quickstart
 
+### Install cert-manager
+
+Cert-manager needs to be installed before installing Slinky operator
+
 ### Install Prerequisites, Slurm Operator, and Slurm
 
 This uses the helm integration with `kustomize` built into the OpenShift Client, `helm` must be installed
 
 ```
-oc kustomize --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/quickstart?ref=main | oc apply -f -
+oc kustomize --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/quickstart?ref=main | oc apply --server-side -f -
 ```
 
 This will deploy:
