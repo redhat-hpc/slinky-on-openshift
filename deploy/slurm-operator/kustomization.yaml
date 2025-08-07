@@ -5,3 +5,4 @@ helmCharts:
     releaseName: slurm-operator
     namespace: slinky
     skipTests: true
+    includeCRDs: true
