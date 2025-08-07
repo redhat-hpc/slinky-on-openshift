@@ -1,0 +1,52 @@
+controller:
+  persistence:
+    storageClass: null
+
+mariadb:
+  primary:
+    persistence:
+      storageClass: null
+
+authcred:
+  image:
+    repository: quay.io/slinky-on-openshift/sackd
+    tag: '25.05'
+
+login:
+  enabled: true
+
+  image:
+    repository: quay.io/slinky-on-openshift/login
+    tag: '25.05'
+
+  service:
+    type: ClusterIP
+
+  sssdConf:
+    domains:
+      DEFAULT:
+        ldap_tls_reqcert: never
+        ldap_uri: ldaps://glauth.slurm.svc.cluster.local
+        ldap_search_base: dc=example,dc=com
+        ldap_user_search_base: dc=example,dc=com
+        ldap_group_search_base: dc=example,dc=com
+
+        ldap_default_bind_dn: cn=serviceuser,dc=example,dc=com
+        ldap_default_authtok: mysecret
+
+        ldap_access_filter: (memberOf=ou=users,ou=groups,dc=example,dc=com)
+
+compute:
+  image:
+    repository: quay.io/slinky-on-openshift/slurmd
+    tag: '25.05'
+
+accounting:
+  image:
+    repository: quay.io/slinky-on-openshift/slurmdbd
+    tag: '25.05'
+
+restapi:
+  image:
+    repository: quay.io/slinky-on-openshift/slurmrestd
+    tag: '25.05'

@@ -1,0 +1,8 @@
+helmCharts:
+  - name: slurm
+    repo: oci://ghcr.io/slinkyproject/charts/
+    version: 0.3.0
+    releaseName: slurm
+    namespace: slurm
+    skipTests: true
+    valuesFile: values-base.yaml

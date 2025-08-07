@@ -5,17 +5,12 @@ Images are built on top of CentOS Stream and are available on [quay.io](https://
 
 ## Quickstart
 
-### Install the Slinky Operator
+### Install Slinky Operator and Slurm Prerequisites
+
+This uses the helm integration with `kustomize` built into the OpenShift Client, `helm` must be installed
 
 ```
-helm install slurm-operator oci://ghcr.io/slinkyproject/charts/slurm-operator \
-  --namespace=slinky --create-namespace
-```
-
-### Install Slurm Prerequisites
-
-```
-oc apply -k deploy/overlays/quickstart
+oc apply --enable-helm -k deploy/overlays/quickstart
 ```
 
 This will deploy:
@@ -50,7 +45,6 @@ Sometimes it is difficult to open up ports on the cluster for a LoadBalancer or 
 
 ```
 oc apply -k deploy/ssh
-oc get route -n slurm
 ```
 
 Using SSH client and openssl, SSH through OpenShift Route proxy to the login pod. The self signed certificate that openssl complains about is the certificate of the terminating proxy running on the login pod and is fine to disregard.

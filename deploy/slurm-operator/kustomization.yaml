@@ -1,0 +1,7 @@
+helmCharts:
+  - name: slurm-operator
+    repo: oci://ghcr.io/slinkyproject/charts
+    version: 0.3.0
+    releaseName: slurm-operator
+    namespace: slinky
+    skipTests: true
