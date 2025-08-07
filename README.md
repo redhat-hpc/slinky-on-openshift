@@ -20,7 +20,7 @@ oc apply -k deploy/overlays/quickstart
 
 This will deploy:
 
-* Base namespace and SecurityContextConstraint
+* Base namespace, SecurityContextConstraint, and RoleBindings
 * GLAuth for managing LDAP auth
 * Expose the login pod SSH server over a TLS route
 
@@ -58,7 +58,8 @@ Using SSH client and openssl, SSH through OpenShift Route proxy to the login pod
 Specifically, we are not authenticating the connection between the OpenShift router and the backend login pod inside the OpenShift cluster.
 
 ```
-ssh -o ProxyCommand="openssl s_client -quiet -connect %h:443 " user1@<route_url>
+SSH_ROUTE=$(oc get route -n slurm slurm-login -o jsonpath={.status.ingress[0].host})
+ssh -o ProxyCommand="openssl s_client -quiet -connect %h:443 " user1@$SSH_ROUTE
 ```
 
 ### Optional: Shared filesystem

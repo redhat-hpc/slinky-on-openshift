@@ -2,40 +2,41 @@ name: Build slurm-operator container images
 
 env:
   REPO: quay.io/slinky-on-openshift
-  SLURM_VERSION: 24.11
+  SLURM_VERSION: 25.05
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build-slinky:
-    runs-on: ubuntu-latest
+  # We don't need to build the operator, just use upstream
+  #
+  # build-slinky:
+  #   runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v3
+  #   steps:
+  #   - uses: actions/checkout@v3
 
-    - name: Login to quay.io
-      uses: docker/login-action@v2
-      with:
-        registry: quay.io
-        username: ${{ secrets.QUAY_USERNAME }}
-        password: ${{ secrets.QUAY_PASSWORD }}
+  #   - name: Login to quay.io
+  #     uses: docker/login-action@v2
+  #     with:
+  #       registry: quay.io
+  #       username: ${{ secrets.QUAY_USERNAME }}
+  #       password: ${{ secrets.QUAY_PASSWORD }}
 
-    - name: Build operator
-      run: |
-        docker build --tag ${{ env.REPO }}/slurm-operator:latest \
-          -f upstream/slurm-operator/build/slurm-operator/Dockerfile \
-          upstream/slurm-operator/
-        docker push ${{ env.REPO }}/slurm-operator:latest
+  #   - name: Build operator
+  #     run: |
+  #       docker build --tag ${{ env.REPO }}/slurm-operator:latest \
+  #         -f upstream/slurm-operator/build/slurm-operator/Dockerfile \
+  #         upstream/slurm-operator/
+  #       docker push ${{ env.REPO }}/slurm-operator:latest
 
-    - name: Build webhook
-      run: |
-        docker build --tag ${{ env.REPO }}/slurm-operator-webhook:latest \
-          -f upstream/slurm-operator/build/slurm-operator-webhook/Dockerfile \
-          upstream/slurm-operator/
-        docker push ${{ env.REPO }}/slurm-operator-webhook:latest
-
+  #   - name: Build webhook
+  #     run: |
+  #       docker build --tag ${{ env.REPO }}/slurm-operator-webhook:latest \
+  #         -f upstream/slurm-operator/build/slurm-operator-webhook/Dockerfile \
+  #         upstream/slurm-operator/
+  #       docker push ${{ env.REPO }}/slurm-operator-webhook:latest
 
   build-slurm:
     runs-on: ubuntu-latest
