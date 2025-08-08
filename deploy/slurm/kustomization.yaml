@@ -5,4 +5,7 @@ helmCharts:
     releaseName: slurm
     namespace: slurm
     skipTests: true
-    valuesFile: values-base.yaml
+    valuesFile: values.yaml
+
+resources:
+  - priorityclass.yaml
