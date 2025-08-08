@@ -4,3 +4,4 @@ resources:
   - ../../ssh
   - ../../slurm-operator
   - ../../slurm
+  - ../../mariadb

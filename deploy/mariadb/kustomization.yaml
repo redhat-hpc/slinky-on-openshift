@@ -1,0 +1,19 @@
+helmCharts:
+  - name: redhat-mariadb-imagestreams
+    repo: https://charts.openshift.io/
+    version: 0.0.3
+    releaseName: redhat-mariadb-imagestreams
+    namespace: slurm
+    valuesFile: values.yaml
+
+  # - name: redhat-mariadb-persistent
+  #   repo: https://charts.openshift.io/
+  #   version: 0.0.2
+  #   releaseName: slurm-mariadb
+  #   namespace: slurm
+  #   valuesFile: values.yaml
+
+resources:
+  - mariadb.yaml
+
+namespace: slurm

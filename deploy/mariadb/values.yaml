@@ -1,0 +1,9 @@
+database_service_name: slurm-mariadb
+mariadb_version: 10.3-el8
+memory_limit: 512Mi
+mysql_database: slurm_acct_db
+mysql_password: slurm
+mysql_root_password: testur
+mysql_user: slurm
+namespace: slurm
+volume_capacity: 8Gi

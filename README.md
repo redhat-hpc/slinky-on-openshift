@@ -52,7 +52,7 @@ Specifically, we are not authenticating the connection between the OpenShift rou
 
 ```
 SSH_ROUTE=$(oc get route -n slurm slurm-login -o jsonpath={.status.ingress[0].host})
-ssh -o ProxyCommand="openssl s_client -quiet -connect %h:443 " user1@$SSH_ROUTE
+ssh -o ProxyCommand="openssl s_client -verify_quiet -connect %h:443 " user1@$SSH_ROUTE
 ```
 
 ### Optional: Shared filesystem
