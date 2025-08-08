@@ -24,7 +24,7 @@ This will deploy:
 ### Install Slurm
 
 ```
-oc kustomize --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/quickstart?ref=main | oc apply --server-side -f -
+oc kustomize --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/quickstart?ref=main | oc apply --server-side --force-conflicts -f -
 ```
 
 This will deploy:
@@ -98,6 +98,12 @@ Run a simple command on a node
 srun -n 1 -t 1:00 hostname
 ```
 
+## Uninstall Slurm and Slinky
+
+```
+oc kustomize --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/quickstart?ref=main | oc delete -f -
+oc kustomize --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/operator?ref=main | oc delete -f -
+```
 
 ## Optional: Enable Autoscaling
 
