@@ -48,7 +48,7 @@ login:
 
 compute:
   image:
-    repository: quay.io/slinky-on-openshift/slurmd
+    repository: quay.io/slinky-on-openshift/slurmd-extra
     tag: '25.05'
 
   # Must have key values out of the array to override instead
