@@ -2,6 +2,5 @@ resources:
   - ../../base
   - ../../glauth
   - ../../ssh
-  - ../../slurm-operator
   - ../../slurm
   - ../../mariadb

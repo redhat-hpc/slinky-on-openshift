@@ -9,9 +9,19 @@ Images are built on top of CentOS Stream and are available on [quay.io](https://
 
 Cert-manager needs to be installed before installing Slinky operator
 
-### Install Prerequisites, Slurm Operator, and Slurm
+### Install Slinky, the Slurm Operator
 
 This uses the helm integration with `kustomize` built into the OpenShift Client, `helm` must be installed
+
+```
+oc kustomize --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/operator?ref=main | oc apply --server-side -f -
+```
+
+This will deploy:
+
+* Slinky (slurm-operator and CustomResourceDefinitions)
+
+### Install Slurm
 
 ```
 oc kustomize --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/quickstart?ref=main | oc apply --server-side -f -
@@ -22,7 +32,6 @@ This will deploy:
 * Base namespace, SecurityContextConstraint, and RoleBindings
 * GLAuth for managing LDAP auth
 * Expose the login pod SSH server over a TLS route
-* Slinky (slurm-operator and CustomResourceDefinitions)
 * Slurm deployment
 
 > [!IMPORTANT]
