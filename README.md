@@ -14,7 +14,7 @@ Cert-manager needs to be installed before installing Slinky operator
 This uses the helm integration with `kustomize` built into the OpenShift Client, `helm` must be installed
 
 ```
-oc kustomize --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/operator?ref=main | oc apply --server-side -f -
+oc kustomize --load-restrictor=LoadRestrictionsNone --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/operator?ref=main | oc apply --server-side -f -
 ```
 
 This will deploy:
@@ -24,7 +24,7 @@ This will deploy:
 ### Install Slurm
 
 ```
-oc kustomize --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/quickstart?ref=main | oc apply --server-side --force-conflicts -f -
+oc kustomize --load-restrictor=LoadRestrictionsNone --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/quickstart?ref=main | oc apply --server-side --force-conflicts -f -
 ```
 
 This will deploy:
@@ -103,9 +103,31 @@ srun -n 1 -t 1:00 hostname
 ## Uninstall Slurm and Slinky
 
 ```
-oc kustomize --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/quickstart?ref=main | oc delete -f -
-oc kustomize --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/operator?ref=main | oc delete -f -
+oc kustomize --load-restrictor=LoadRestrictionsNone --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/quickstart?ref=main | oc delete -f -
+oc kustomize --load-restrictor=LoadRestrictionsNone --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/operator?ref=main | oc delete -f -
 ```
+
+## Optional: Shared filesystem with NFS
+
+Alternatively to the quickstart, we can deploy Slurm with a shared home area. If you have already deployed Slurm then uninstall the quickstart before installing the example with NFS
+
+### Prerequisite: Storage
+
+The NFS example will consume a RWO volume using the default storage class
+
+### Deploy the NFS CSI provisionier
+
+```
+oc kustomize --load-restrictor=LoadRestrictionsNone --enable-helm deploy/overlays/nfs-operator/ | oc apply --server-side -f -
+```
+
+### Deploy Slurm with a NFS-backed home area
+
+```
+oc kustomize --load-restrictor=LoadRestrictionsNone --enable-helm deploy/overlays/nfs/ | oc apply --server-side -f -
+```
+
+When used with SSH, the homeareas should be created automatically on successful login.
 
 ## Optional: Enable Autoscaling
 
@@ -138,30 +160,6 @@ https://docs.redhat.com/en/documentation/openshift_container_platform/4.17/html/
 ```
 oc apply -k deploy/keda
 ```
-
-## Optional: Shared filesystem
-
-Optionally can add a shared filesystem that is mounted at `/home` in the containers
-
-This creates a 100GB PVC called `user-homearea` and a deployment to manage the filesystem for things like creating home areas
-
-```
-oc apply -k deploy/homearea
-```
-
-> [!NOTE]
-> This deploys a PVC with cephfs (which requires OpenShift Data Foundations being deployed and running in the cluster) which may not be for all use cases.
-
-We can deploy a shared filesystem with cephfs and mount it on the login and compute pods:
-
-```
-helm upgrade -i -n slurm slurm upstream/slurm-operator/helm/slurm/ --values helm/values-slurm-with-homearea.yaml
-```
-
-When used with SSH, the homeareas should be created automatically on successful login.
-
-Other shared homeareas can be used as well, such as NFS which works great if you only have RWO block access: https://github.com/naps-product-sa/openshift-batch/tree/main/storage/simple-nfs
-
 
 ## Extra: OpenShift Route for SSH
 
