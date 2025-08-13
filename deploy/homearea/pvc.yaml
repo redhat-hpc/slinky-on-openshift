@@ -2,12 +2,11 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: user-homearea
-  namespace: slurm
 spec:
   accessModes:
     - ReadWriteMany
   resources:
     requests:
-      storage: 100Gi
-  storageClassName: ocs-storagecluster-cephfs
+      storage: 10Gi
+  storageClassName: simple-nfs
   volumeMode: Filesystem

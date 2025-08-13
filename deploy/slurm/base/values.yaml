@@ -51,40 +51,6 @@ compute:
     repository: quay.io/slinky-on-openshift/slurmd-extra
     tag: '25.05'
 
-  # Must have key values out of the array to override instead
-  # of append, behavior is non-deterministic
-  nodesets:
-    - name: debug
-      enabled: true
-      replicas: 2
-      imagePullPolicy: IfNotPresent
-      image:
-        repository: ""
-        tag: ""
-      priorityClassName: slurm
-      nodeSelector:
-        kubernetes.io/os: linux
-      affinity: {}
-      tolerations: []
-      resources: {}
-      useResourceLimits: true
-      updateStrategy:
-        type: RollingUpdate
-        rollingUpdate:
-          maxUnavailable: 20%
-      persistentVolumeClaimRetentionPolicy:
-        whenDeleted: Retain
-        whenScaled: Retain
-      volumeClaimTemplates: []
-      extraVolumeMounts: []
-      extraVolumes: []
-      partition:
-        enabled: true
-        config:
-          State: UP
-          MaxTime: UNLIMITED
-      nodeConfig: {}
-
 accounting:
   image:
     repository: quay.io/slinky-on-openshift/slurmdbd

@@ -4,4 +4,5 @@ resources:
   - ../../ssh
   - ../../mariadb
 
-  - ../../slurm/standard
+  - ../../homearea
+  - ../../slurm/nfs

@@ -48,8 +48,10 @@ SSH_ROUTE=$(oc get route -n slurm slurm-login -o jsonpath={.status.ingress[0].ho
 ssh -o ProxyCommand="openssl s_client -verify_quiet -connect %h:443 " user1@$SSH_ROUTE
 ```
 
->[!INFO]
-> or socat: `ssh -o UserKnownHostsFile=/dev/null -o ProxyCommand="socat - OPENSSL:%h:443,verify=0" user1@$SSH_ROUTE`
+or socat:
+```
+ssh -o UserKnownHostsFile=/dev/null -o ProxyCommand="socat - OPENSSL:%h:443,verify=0" user1@$SSH_ROUTE
+```
 
 By default, the password for `user1` is `user1`
 

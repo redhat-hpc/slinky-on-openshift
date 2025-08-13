@@ -1,0 +1,49 @@
+resources:
+  - ../base
+
+helmCharts:
+  - name: slurm
+    repo: oci://ghcr.io/slinkyproject/charts/
+    version: 0.3.0
+    releaseName: slurm
+    namespace: slurm
+    skipTests: true
+    valuesFile: ../base/values.yaml
+    valuesInline:
+      login:
+        extraVolumeMounts:
+          - name: nfs-home
+            mountPath: /home
+        extraVolumes:
+          - name: nfs-home
+            persistentVolumeClaim:
+              claimName: user-homearea
+      compute:
+        nodesets:
+          - name: debug
+            enabled: true
+            replicas: 2
+            imagePullPolicy: IfNotPresent
+            image:
+              repository: ""
+              tag: ""
+            priorityClassName: slurm
+            nodeSelector:
+              kubernetes.io/os: linux
+            affinity: {}
+            tolerations: []
+            resources: {}
+            useResourceLimits: true
+            extraVolumeMounts:
+              - name: nfs-home
+                mountPath: /home
+            extraVolumes:
+              - name: nfs-home
+                persistentVolumeClaim:
+                  claimName: user-homearea
+            partition:
+              enabled: true
+              config:
+                State: UP
+                MaxTime: UNLIMITED
+            nodeConfig: {}
