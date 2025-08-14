@@ -118,13 +118,14 @@ The NFS example will consume a RWO volume using the default storage class
 ### Deploy the NFS CSI provisionier
 
 ```
-oc kustomize --load-restrictor=LoadRestrictionsNone --enable-helm deploy/overlays/nfs-operator/ | oc apply --server-side -f -
+helm repo add nfs-ganesha-server-and-external-provisioner https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner/
+helm install nfs nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner -n nfs --create-namespace -f helm/values-nfs.yaml
 ```
 
 ### Deploy Slurm with a NFS-backed home area
 
 ```
-oc kustomize --load-restrictor=LoadRestrictionsNone --enable-helm deploy/overlays/nfs/ | oc apply --server-side -f -
+helm upgrade -i slurm helm/slinky-on-openshift --reset-values -n slurm -f helm/values-nfs.yaml
 ```
 
 When used with SSH, the homeareas should be created automatically on successful login.

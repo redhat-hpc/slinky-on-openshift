@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "glauth.fullname" . }}
+  labels:
+    {{- include "glauth.labels" . | nindent 4 }}
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: glauth-tls
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "glauth.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "glauth.labels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: glauth
+        image: glauth/glauth:latest
+        ports:
+        - containerPort: 3893  # LDAP
+          name: ldap
+        - containerPort: 3894  # LDAPS
+          name: ldaps
+        - containerPort: 5555  # Additional port
+          name: additional
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        - name: tls
+          mountPath: /etc/tls/serving
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "glauth.fullname" . }}-config
+          items:
+          - key: config.cfg
+            path: config.cfg
+      - name: tls
+        secret:
+          secretName: glauth-tls
+          optional: false

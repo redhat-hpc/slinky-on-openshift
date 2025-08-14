@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: slurm-login
+  labels:
+    {{- include "slinky-on-openshift.labels" . | nindent 4 }}
+spec:
+  port:
+    targetPort: https
+  tls:
+    termination: passthrough
+  to:
+    kind: Service
+    name: slurm-login-sshproxy
+    weight: 100

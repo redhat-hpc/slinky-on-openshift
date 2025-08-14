@@ -1,0 +1,15 @@
+dependencies:
+- name: slurm
+  repository: oci://ghcr.io/slinkyproject/charts
+  version: 0.3.0
+- name: glauth
+  repository: file://./charts/glauth
+  version: 0.1.0
+- name: redhat-mariadb-imagestreams
+  repository: https://charts.openshift.io/
+  version: 0.0.3
+- name: redhat-mariadb-persistent
+  repository: file://./charts/redhat-mariadb-persistent
+  version: 0.0.3
+digest: sha256:c67b1ae470db63dc46370947358a8c6781c8c658cd6275d7a1d3ac7040911abf
+generated: "2025-08-14T05:37:27.511144-04:00"

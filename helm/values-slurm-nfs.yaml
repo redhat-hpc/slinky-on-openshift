@@ -1,0 +1,33 @@
+persistence:
+  enabled: true
+  storageClass: nfs
+
+slurm:
+  login:
+    extraVolumeMounts:
+      - name: nfs-home
+        mountPath: /home
+    extraVolumes:
+      - name: nfs-home
+        persistentVolumeClaim:
+          claimName: nfs-home
+
+  compute:
+    nodesets:
+    - name: debug
+      enabled: true
+      replicas: 2
+      image:
+        repository: ""
+      extraVolumeMounts:
+        - name: nfs-home
+          mountPath: /home
+      extraVolumes:
+        - name: nfs-home
+          persistentVolumeClaim:
+            claimName: nfs-home
+      partition:
+        enabled: true
+        config:
+          State: UP
+          MaxTime: UNLIMITED

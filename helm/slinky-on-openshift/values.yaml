@@ -1,0 +1,84 @@
+persistence:
+  enabled: false
+  size: 10Gi
+  storageClass: ""
+
+slurm:
+  controller:
+    persistence:
+      storageClass: null
+
+  mariadb:
+    enabled: false
+    # primary:
+    #   persistence:
+    #     storageClass: null
+    #   containerSecurityContext:
+    #     seLinuxOptions: null
+
+  authcred:
+    image:
+      repository: quay.io/slinky-on-openshift/sackd
+      tag: '25.05'
+
+  login:
+    enabled: true
+
+    imagePullPolicy: Always
+    image:
+      repository: quay.io/slinky-on-openshift/login-extra
+      tag: '25.05'
+
+    service:
+      type: ClusterIP
+
+    sssdConf:
+      domains:
+        DEFAULT:
+          ldap_tls_reqcert: never
+          ldap_uri: ldaps://slurm-glauth.slurm.svc.cluster.local
+          ldap_search_base: dc=example,dc=com
+          ldap_user_search_base: dc=example,dc=com
+          ldap_group_search_base: dc=example,dc=com
+
+          ldap_default_bind_dn: cn=serviceuser,dc=example,dc=com
+          ldap_default_authtok: mysecret
+
+          ldap_access_filter: (memberOf=ou=users,ou=groups,dc=example,dc=com)
+
+    securityContext:
+      runAsUser: 0
+      capabilities:
+        add:
+          - SYS_CHROOT
+
+  compute:
+    image:
+      repository: quay.io/slinky-on-openshift/slurmd-extra
+      tag: '25.05'
+
+  accounting:
+    image:
+      repository: quay.io/slinky-on-openshift/slurmdbd
+      tag: '25.05'
+
+    external:
+      enabled: true
+      host: slurm-mariadb
+      password: slurm
+
+  restapi:
+    image:
+      repository: quay.io/slinky-on-openshift/slurmrestd
+      tag: '25.05'
+
+mariadb:
+  database_service_name: slurm-mariadb
+  mariadb_version: 10.3-el8
+  memory_limit: 512Mi
+  mysql_database: slurm_acct_db
+  mysql_password: slurm
+  mysql_root_password: testroot
+  mysql_user: slurm
+  namespace: slurm
+  volume_capacity: 8Gi

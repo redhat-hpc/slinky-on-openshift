@@ -1,0 +1,25 @@
+apiVersion: v2
+name: slinky-on-openshift
+description: A pattern for running Slinky on OpenShift
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: slurm
+    repository: oci://ghcr.io/slinkyproject/charts
+    version: "0.3.0"
+  - name: glauth
+    repository: file://./charts/glauth
+    version: "*"
+  # - name: nfs-server-provisioner
+  #   repository: https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner
+  #   version: 1.8.0
+  #   condition: nfs.enabled
+  #   alias: nfs
+  - name: redhat-mariadb-imagestreams
+    repository: https://charts.openshift.io/
+    version: 0.0.3
+  - name: redhat-mariadb-persistent
+    repository: file://./charts/redhat-mariadb-persistent
+    version: "*"
+    alias: mariadb

@@ -1,0 +1,7 @@
+enabled: true
+persistence:
+  enabled: true
+  size: 50Gi
+storageClass:
+  mountOptions:
+    - vers=4.1
