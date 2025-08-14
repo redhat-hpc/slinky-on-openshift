@@ -1,0 +1,51 @@
+login:
+  extraVolumeMounts:
+    - name: nfs-home
+      mountPath: /home
+  extraVolumes:
+    - name: nfs-home
+      persistentVolumeClaim:
+        claimName: user-homearea
+compute:
+  nodesets:
+    - name: debug
+      enabled: true
+      replicas: 2
+      image:
+        repository: ""
+      extraVolumeMounts:
+        - name: nfs-home
+          mountPath: /home
+      extraVolumes:
+        - name: nfs-home
+          persistentVolumeClaim:
+            claimName: user-homearea
+      partition:
+        enabled: true
+        config:
+          State: UP
+          MaxTime: UNLIMITED
+    - name: gpu
+      replicas: 2
+      enabled: true
+      image:
+        repository: ""
+      partition:
+        enabled: true
+        config:
+          State: UP
+          MaxTime: UNLIMITED
+      resources:
+        limits:
+          cpu: 4
+          memory: 8Gi
+        requests:
+          cpu: 4
+          memory: 8Gi
+      extraVolumeMounts:
+        - name: nfs-home
+          mountPath: /home
+      extraVolumes:
+        - name: nfs-home
+          persistentVolumeClaim:
+            claimName: user-homearea

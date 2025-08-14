@@ -9,34 +9,8 @@ helmCharts:
     namespace: slurm
     skipTests: true
     valuesFile: ../base/values.yaml
-    valuesInline:
-      login:
-        extraVolumeMounts:
-          - name: nfs-home
-            mountPath: /home
-        extraVolumes:
-          - name: nfs-home
-            persistentVolumeClaim:
-              claimName: user-homearea
-      compute:
-        nodesets:
-          - name: debug
-            enabled: true
-            replicas: 2
-            image:
-              repository: ""
-            extraVolumeMounts:
-              - name: nfs-home
-                mountPath: /home
-            extraVolumes:
-              - name: nfs-home
-                persistentVolumeClaim:
-                  claimName: user-homearea
-            partition:
-              enabled: true
-              config:
-                State: UP
-                MaxTime: UNLIMITED
+    additionalValuesFiles:
+      - values.yaml
 
 patches:
   - target:
