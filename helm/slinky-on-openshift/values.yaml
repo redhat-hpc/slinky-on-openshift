@@ -57,6 +57,36 @@ slurm:
       repository: quay.io/slinky-on-openshift/slurmd-extra
       tag: '25.05'
 
+    nodesets:
+      - name: debug
+        enabled: true
+        replicas: 2
+        imagePullPolicy: IfNotPresent
+        image:
+          repository: ""
+          tag: ""
+        nodeSelector:
+          kubernetes.io/os: linux
+        affinity: {}
+        tolerations: []
+        resources:
+          requests:
+            cpu: 4
+            memory: 8Gi
+          limits:
+            cpu: 4
+            memory: 8Gi
+        useResourceLimits: true
+        volumeClaimTemplates: []
+        extraVolumeMounts: []
+        extraVolumes: []
+        partition:
+          enabled: true
+          config:
+            State: UP
+            MaxTime: UNLIMITED
+        nodeConfig: {}
+
   accounting:
     image:
       repository: quay.io/slinky-on-openshift/slurmdbd

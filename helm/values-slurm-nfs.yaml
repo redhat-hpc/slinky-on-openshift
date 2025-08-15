@@ -14,20 +14,28 @@ slurm:
 
   compute:
     nodesets:
-    - name: debug
-      enabled: true
-      replicas: 2
-      image:
-        repository: ""
-      extraVolumeMounts:
-        - name: nfs-home
-          mountPath: /home
-      extraVolumes:
-        - name: nfs-home
-          persistentVolumeClaim:
-            claimName: nfs-home
-      partition:
+      - name: debug
         enabled: true
-        config:
-          State: UP
-          MaxTime: UNLIMITED
+        replicas: 3
+        image:
+          repository: ""
+        resources:
+          requests:
+            cpu: 4
+            memory: 8Gi
+          limits:
+            cpu: 4
+            memory: 8Gi
+        useResourceLimits: true
+        extraVolumeMounts:
+          - name: nfs-home
+            mountPath: /home
+        extraVolumes:
+          - name: nfs-home
+            persistentVolumeClaim:
+              claimName: nfs-home
+        partition:
+          enabled: true
+          config:
+            State: UP
+            MaxTime: UNLIMITED
