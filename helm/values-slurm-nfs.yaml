@@ -16,7 +16,7 @@ slurm:
     nodesets:
       - name: debug
         enabled: true
-        replicas: 3
+        replicas: 2
         image:
           repository: ""
         resources:

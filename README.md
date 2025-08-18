@@ -16,10 +16,10 @@ Cert-manager needs to be installed before installing Slinky operator
 
 ### Install Slinky, the Slurm Operator
 
-Installing the operator is the same as upstream
+Installing the operator is the [same as upstream](https://github.com/SlinkyProject/slurm-operator/blob/release-0.3/docs/quickstart.md#slurm-operator)
 
 ```
-helm install slurm-operator oci://ghcr.io/slinkyproject/charts/slurm-operator --namespace=slinky --create-namespace --version 0.0.3
+helm install slurm-operator oci://ghcr.io/slinkyproject/charts/slurm-operator --namespace=slinky --create-namespace --version 0.3.1
 ```
 
 ### Install Slurm
@@ -104,8 +104,8 @@ srun -n 1 -t 1:00 hostname
 ## Uninstall Slurm and Slinky
 
 ```
-oc kustomize --load-restrictor=LoadRestrictionsNone --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/quickstart?ref=main | oc delete -f -
-oc kustomize --load-restrictor=LoadRestrictionsNone --enable-helm https://github.com/redhat-na-ssa/slinky-on-openshift/deploy/overlays/operator?ref=main | oc delete -f -
+helm uninstall slurm -n slurm
+helm uninstall slinky -n slinky
 ```
 
 ## Optional: Shared filesystem with NFS
@@ -121,15 +121,15 @@ The NFS example will consume a RWO volume using the default storage class
 ```
 helm repo add nfs-ganesha-server-and-external-provisioner https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner/
 
-curl https://raw.githubusercontent.com/redhat-na-ssa/slinky-on-openshift/refs/heads/main/helm/values-nfs-provisioner.yaml
-helm install nfs nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner -n nfs --create-namespace -f helm/values-nfs-provisioner.yaml
+curl -O https://raw.githubusercontent.com/redhat-na-ssa/slinky-on-openshift/refs/heads/main/helm/values-nfs-provisioner.yaml
+helm install nfs nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner -n nfs --create-namespace -f values-nfs-provisioner.yaml
 ```
 
 ### Deploy Slurm with a NFS-backed home area
 
 ```
-curl https://raw.githubusercontent.com/redhat-na-ssa/slinky-on-openshift/refs/heads/main/helm/values-slurm-nfs.yaml
-helm upgrade -i slurm oci://quay.io/slinky-on-openshift/slinky-on-openshift --reset-values -n slurm -f values-nfs.yaml
+curl -O https://raw.githubusercontent.com/redhat-na-ssa/slinky-on-openshift/refs/heads/main/helm/values-slurm-nfs.yaml
+helm upgrade -i slurm oci://quay.io/slinky-on-openshift/slinky-on-openshift --reset-values -n slurm -f values-slurm-nfs.yaml
 ```
 
 When used with SSH, the homeareas should be created automatically on successful login.
