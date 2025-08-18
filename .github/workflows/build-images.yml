@@ -23,6 +23,14 @@ jobs:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
 
+    - name: Build base
+      run: |
+        docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
+          --tag ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }} \
+          --target=base \
+          upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
+        docker push ${{ env.REPO }}/base:${{ env.SLURM_VERSION }}
+
     - name: Build slurmd
       run: |
         docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
