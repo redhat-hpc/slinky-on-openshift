@@ -49,7 +49,6 @@ EOR
 ################################################################################
 FROM ghcr.io/slinkyproject/slurmd:25.05-rockylinux9 AS slurmd-pyxis
 
-
 ARG ENROOT_VERSION
 ENV ENROOT_VERSION="${ENROOT_VERSION}"
 
