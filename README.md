@@ -67,9 +67,6 @@ ssh -o StrictHostKeyChecking=no -p 2222 user1@localhost
 
 By default, the password for `user1` is `user1`
 
->[!NOTE]
-> Setting `UserKnownHostsFile` just prevents SSH from caching the server key as localhost, the security of authenticating the server is handled by the port-forward command to the OpenShift API server
-
 #### Run a job
 
 We can see that the nodes have checked into the cluster
