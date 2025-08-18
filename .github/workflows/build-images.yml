@@ -1,4 +1,4 @@
-name: Build slurm-operator container images
+name: Build Slurm images
 
 env:
   REPO: quay.io/slinky-on-openshift

@@ -1,4 +1,4 @@
-name: Package and Push Helm Chart
+name: Package slinky-on-openshift chart
 
 env:
   CHART_PATH: helm/slinky-on-openshift
