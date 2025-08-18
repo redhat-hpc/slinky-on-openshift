@@ -5,8 +5,9 @@ env:
   SLURM_VERSION: 25.05
 
 on:
-  push:
-    branches: [ "main" ]
+  workflow_dispatch:
+  # push:
+  #   branches: [ "main" ]
 
 jobs:
   # We don't need to build the operator, just use upstream
