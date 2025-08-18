@@ -46,22 +46,10 @@ With the deployment running, now we can SSH into the login pod. This example use
 
 ```
 SSH_ROUTE=$(oc get route -n slurm slurm-login -o jsonpath={.status.ingress[0].host})
-ssh -o ProxyCommand="openssl s_client -verify_quiet -connect %h:443 " user1@$SSH_ROUTE
-```
-
-or socat:
-```
-ssh -o UserKnownHostsFile=/dev/null -o ProxyCommand="socat - OPENSSL:%h:443,verify=0" user1@$SSH_ROUTE
+ssh -o StrictHostKeyChecking=no -o ProxyCommand="socat - OPENSSL:%h:443,verify=0" user1@$SSH_ROUTE
 ```
 
 By default, the password for `user1` is `user1`
-
-The output will include a reference to a insecure and self-signed certificate which can be safely ignored.
-
-```
-depth=0 C=US, ST=State, L=City, O=Organization, OU=Unit, CN=localhost
-verify error:num=18:self-signed certificate
-```
 
 #### Alternatively: Use a port-forward for SSH to login pod
 
@@ -74,7 +62,7 @@ oc -n slurm port-forward deploy/slurm-login 2222:22
 In a second window, ssh:
 
 ```
-ssh -o UserKnownHostsFile=/dev/null -p 2222 user1@localhost
+ssh -o StrictHostKeyChecking=no -p 2222 user1@localhost
 ```
 
 By default, the password for `user1` is `user1`
