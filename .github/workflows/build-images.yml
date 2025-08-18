@@ -26,7 +26,7 @@ jobs:
     - name: Build base
       run: |
         docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
-          --tag ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }} \
+          --tag ${{ env.REPO }}/base:${{ env.SLURM_VERSION }} \
           --target=base \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
         docker push ${{ env.REPO }}/base:${{ env.SLURM_VERSION }}
