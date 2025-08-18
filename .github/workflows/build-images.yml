@@ -92,3 +92,10 @@ jobs:
           --tag ${{ env.REPO }}/login-extra:${{ env.SLURM_VERSION }} \
           images/login
         docker push ${{ env.REPO }}/login-extra:${{ env.SLURM_VERSION }}
+
+    - name: Build slurm workbench
+      run: |
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/base:${{ env.SLURM_VERSION }} \
+          --tag ${{ env.REPO }}/workbench:${{ env.SLURM_VERSION }} \
+          images/workbench
+        docker push ${{ env.REPO }}/workbench:${{ env.SLURM_VERSION }}
