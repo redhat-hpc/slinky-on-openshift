@@ -5,10 +5,6 @@ env:
   OCI_REGISTRY: oci://quay.io/slinky-on-openshift
 
 on:
-  push:
-    branches: [ "main" ]
-    paths:
-      - 'helm/**'
   release:
     types: [published]
   workflow_dispatch:
