@@ -1,8 +1,0 @@
-resources:
-  - ../../base
-  - ../../glauth
-  - ../../ssh
-  - ../../mariadb
-
-  - ../../homearea
-  - ../../slurm/nfs

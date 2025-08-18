@@ -1,7 +1,0 @@
-resources:
-  - ../../base
-  - ../../glauth
-  - ../../ssh
-  - ../../mariadb
-
-  - ../../slurm/standard
