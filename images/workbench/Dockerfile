@@ -1,5 +1,5 @@
 ARG PARENT_IMAGE=scratch
-FROM ${PARENT_IMAGE} as base
+FROM ${PARENT_IMAGE} AS base
 
 FROM quay.io/modh/odh-minimal-notebook-container:v3-20250818
 
