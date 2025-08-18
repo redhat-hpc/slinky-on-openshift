@@ -6,7 +6,7 @@ metadata:
     {{- include "glauth.labels" . | nindent 4 }}
 data:
   config.cfg: |
-    debug = true
+    debug = false
 
     [api]
       enabled = true
