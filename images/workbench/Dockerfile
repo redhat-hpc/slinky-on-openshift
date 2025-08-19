@@ -13,7 +13,7 @@ set -xeuo pipefail
 dnf -q -y install --setopt='install_weak_deps=False' \
   /tmp/slurm-sackd-[0-9]*.rpm \
   /tmp/slurm-[0-9]*.rpm
-rm *.rpm && dnf clean all
+rm /tmp/*.rpm && dnf clean all
 # Prepare Directories
 mkdir -p /run/slurm/
 EOR
