@@ -1,0 +1,79 @@
+{{- if .Values.machineset.enabled }}
+{{- $existingMachineSet := lookup "machine.openshift.io/v1beta1" "MachineSet" .Values.machineset.namespace .Values.machineset.sourceName }}
+{{- if $existingMachineSet }}
+{{- $newName := .Values.machineset.sourceName | replace "worker" .Values.machineset.workerReplacement }}
+apiVersion: machine.openshift.io/v1beta1
+kind: MachineSet
+metadata:
+  name: {{ $newName }}
+  namespace: {{ .Values.machineset.namespace }}
+  labels:
+    {{- range $key, $value := $existingMachineSet.metadata.labels }}
+    {{- if eq $key "machine.openshift.io/cluster-api-machineset" }}
+    {{ $key }}: {{ $value | replace "worker" $.Values.machineset.workerReplacement | quote }}
+    {{- else if eq $key "hive.openshift.io/managed" }}
+    {{ $key }}: "false"
+    {{- else if eq $key "hive.openshift.io/machine-pool" }}
+    {{- else }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.machineset.replicas | default 0 }}
+  selector:
+    matchLabels:
+      {{- range $key, $value := $existingMachineSet.spec.selector.matchLabels }}
+      {{- if eq $key "machine.openshift.io/cluster-api-machineset" }}
+      {{ $key }}: {{ $value | replace "worker" $.Values.machineset.workerReplacement | quote }}
+      {{- else }}
+      {{ $key }}: {{ $value | quote }}
+      {{- end }}
+      {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- range $key, $value := $existingMachineSet.spec.template.metadata.labels }}
+        {{- if eq $key "machine.openshift.io/cluster-api-machineset" }}
+        {{ $key }}: {{ $value | replace "worker" $.Values.machineset.workerReplacement | quote }}
+        {{- else }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+    spec:
+      {{- with $existingMachineSet.spec.template.spec.lifecycleHooks }}
+      lifecycleHooks:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $existingMachineSet.spec.template.spec.metadata }}
+      metadata:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      providerSpec:
+        value:
+          {{- $providerSpec := $existingMachineSet.spec.template.spec.providerSpec.value }}
+          {{- range $key, $value := $providerSpec }}
+          {{- if eq $key "instanceType" }}
+          {{ $key }}: {{ $.Values.machineset.instanceType | default $value }}
+          {{- else }}
+          {{ $key }}:
+            {{- if kindIs "map" $value }}
+            {{- toYaml $value | nindent 12 }}
+            {{- else if kindIs "slice" $value }}
+            {{- toYaml $value | nindent 12 }}
+            {{- else }}
+            {{ $value }}
+            {{- end }}
+          {{- end }}
+          {{- end }}
+      {{- with $existingMachineSet.spec.template.spec.taints }}
+      taints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.machineset.additionalTaints }}
+        {{- if not $existingMachineSet.spec.template.spec.taints }}
+      taints:
+        {{- end }}
+        {{- toYaml .Values.machineset.additionalTaints | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}

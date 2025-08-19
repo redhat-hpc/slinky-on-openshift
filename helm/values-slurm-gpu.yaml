@@ -3,16 +3,18 @@ slurm:
     nodesets:
       - name: gpu
         enabled: true
-        replicas: 2
+        replicas: 4
         image:
           repository: ""
         resources:
           requests:
-            cpu: 4
-            memory: 8Gi
+            cpu: 14
+            memory: 56Gi
+            nvidia.com/gpu: 1
           limits:
-            cpu: 4
-            memory: 8Gi
+            cpu: 14
+            memory: 56Gi
+            nvidia.com/gpu: 1
         useResourceLimits: true
         extraVolumeMounts:
           - name: nfs-home
@@ -26,3 +28,14 @@ slurm:
           config:
             State: UP
             MaxTime: UNLIMITED
+
+machineset:
+  enabled: true
+  # sourceName: "cluster-slurm-5fs8t-worker-us-east-2c"
+  workerReplacement: "gpu-worker"
+  replicas: 4
+  instanceType: "g6.4xlarge"
+  additionalTaints:
+    - key: "gpu"
+      value: "true"
+      effect: "PreferNoSchedule"

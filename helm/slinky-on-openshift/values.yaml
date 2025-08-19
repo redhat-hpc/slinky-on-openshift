@@ -112,3 +112,22 @@ mariadb:
   mysql_user: slurm
   namespace: slurm
   volume_capacity: 8Gi
+
+# MachineSet Configuration
+machineset:
+  enabled: false
+  # Name of the existing MachineSet to base the new one on
+  sourceName: ""
+  # Namespace where the MachineSet exists and will be created
+  namespace: "openshift-machine-api"
+  # What to replace "worker" with in names and labels
+  workerReplacement: "metal-worker"
+  # Number of replicas (typically 0 for metal workers initially)
+  replicas: 0
+  # Instance type for the new MachineSet
+  instanceType: "c5.metal"
+  # Additional taints to add to the metal worker nodes
+  additionalTaints:
+    - key: "metal-worker"
+      value: "true"
+      effect: "PreferNoSchedule"
