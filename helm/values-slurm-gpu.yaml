@@ -3,7 +3,7 @@ slurm:
     nodesets:
       - name: gpu
         enabled: true
-        replicas: 4
+        replicas: 0
         image:
           repository: ""
         resources:
@@ -33,7 +33,7 @@ machineset:
   enabled: true
   # sourceName: "cluster-slurm-5fs8t-worker-us-east-2c"
   workerReplacement: "gpu-worker"
-  replicas: 4
+  replicas: 0
   instanceType: "g6.4xlarge"
   additionalTaints:
     - key: "gpu"
