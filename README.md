@@ -24,6 +24,8 @@ helm install slurm-operator oci://ghcr.io/slinkyproject/charts/slurm-operator --
 
 ### Install Slurm
 
+Assuming there is a default storage class set:
+
 ```
 helm install slurm -n slurm oci://quay.io/slinky-on-openshift/slinky-on-openshift --create-namespace
 ```
@@ -106,15 +108,15 @@ The NFS example will consume a RWO volume using the default storage class
 ```
 helm repo add nfs-ganesha-server-and-external-provisioner https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner/
 
-curl -O https://raw.githubusercontent.com/redhat-na-ssa/slinky-on-openshift/refs/heads/main/helm/values-nfs-provisioner.yaml
-helm install nfs nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner -n nfs --create-namespace -f values-nfs-provisioner.yaml
+helm install nfs nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner -n nfs --create-namespace \
+  -f https://raw.githubusercontent.com/redhat-na-ssa/slinky-on-openshift/refs/heads/main/helm/values-nfs-provisioner.yaml
 ```
 
 ### Deploy Slurm with a NFS-backed home area
 
 ```
-curl -O https://raw.githubusercontent.com/redhat-na-ssa/slinky-on-openshift/refs/heads/main/helm/values-slurm-nfs.yaml
-helm upgrade -i slurm oci://quay.io/slinky-on-openshift/slinky-on-openshift --reset-values -n slurm -f values-slurm-nfs.yaml
+helm upgrade -i slurm oci://quay.io/slinky-on-openshift/slinky-on-openshift --reset-values -n slurm \
+  -f https://raw.githubusercontent.com/redhat-na-ssa/slinky-on-openshift/refs/heads/main/helm/values-slurm-nfs.yaml
 ```
 
 When used with SSH, the homeareas should be created automatically on successful login.
