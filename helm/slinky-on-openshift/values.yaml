@@ -8,6 +8,12 @@ slurm:
     persistence:
       storageClass: null
 
+    imagePullPolicy: IfNotPresent
+    image:
+      repository: quay.io/slinky-on-openshift/slurmctld
+      tag: '25.05'
+
+
   mariadb:
     enabled: false
     # primary:

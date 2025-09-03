@@ -2,7 +2,7 @@ apiVersion: v2
 name: slinky-on-openshift
 description: A pattern for running Slinky on OpenShift
 type: application
-version: 0.1.0
+version: 0.1.1
 
 dependencies:
   - name: slurm
