@@ -54,7 +54,7 @@ slurm:
 
   compute:
     image:
-      repository: quay.io/slinky-on-openshift/slurmd-extra
+      repository: quay.io/slinky-on-openshift/slurmd
       tag: '25.05'
 
     nodesets:
