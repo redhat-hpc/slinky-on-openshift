@@ -23,9 +23,16 @@ jobs:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
 
-    - name: Build base
+    - name: Build parent
       run: |
         docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
+          --tag ${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
+          images/parent
+        docker push ${{ env.REPO }}/parent:${{ env.SLURM_VERSION }}
+
+    - name: Build base
+      run: |
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
           --tag ${{ env.REPO }}/base:${{ env.SLURM_VERSION }} \
           --target=base \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
@@ -33,7 +40,7 @@ jobs:
 
     - name: Build slurmd
       run: |
-        docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
           --tag ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }} \
           --target=slurmd \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
@@ -41,7 +48,7 @@ jobs:
 
     - name: Build slurmctld
       run: |
-        docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
           --tag ${{ env.REPO }}/slurmctld:${{ env.SLURM_VERSION }} \
           --target=slurmctld \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
@@ -49,7 +56,7 @@ jobs:
 
     - name: Build slurmrestd
       run: |
-        docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
           --tag ${{ env.REPO }}/slurmrestd:${{ env.SLURM_VERSION }} \
           --target=slurmrestd \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
@@ -57,7 +64,7 @@ jobs:
 
     - name: Build slurmdbd
       run: |
-        docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
           --tag ${{ env.REPO }}/slurmdbd:${{ env.SLURM_VERSION }} \
           --target=slurmdbd \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
@@ -65,7 +72,7 @@ jobs:
 
     - name: Build sackd
       run: |
-        docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
           --tag ${{ env.REPO }}/sackd:${{ env.SLURM_VERSION }} \
           --target=sackd \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
@@ -73,18 +80,11 @@ jobs:
 
     - name: Build login
       run: |
-        docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
           --tag ${{ env.REPO }}/login:${{ env.SLURM_VERSION }} \
           --target=login \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
         docker push ${{ env.REPO }}/login:${{ env.SLURM_VERSION }}
-
-    - name: Build slurmd-extra
-      run: |
-        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }} \
-          --tag ${{ env.REPO }}/slurmd-extra:${{ env.SLURM_VERSION }} \
-          images/slurmd
-        docker push ${{ env.REPO }}/slurmd-extra:${{ env.SLURM_VERSION }}
 
     - name: Build login-extra
       run: |

@@ -5,10 +5,7 @@ RUN <<EOR
 # Install socat for https
 set -xeuo pipefail
 dnf -q makecache --refresh
-dnf -q -y group install "Development Tools"
-dnf -q -y install libtool gcc-gfortran gcc-toolset-12
-dnf -q -y install socat \
-    python3 python3-pip procps-ng git vim-enhanced hostname man-db hwloc iproute
+dnf -q -y install socat
 dnf clean all
 
 mv /etc/supervisor/supervisord.conf /etc/supervisord.d/slurm.conf
