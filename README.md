@@ -44,6 +44,16 @@ This will deploy:
 
 #### SSH to login pod
 
+##### Method 1: SSH from OpenShift Console Web Terminal
+
+If we are using the web terminal we can SSH directly into the login service:
+
+```
+ssh -p 2222 user1@slurm-login.slurm.svc
+```
+
+##### Method 2: SSH via TLS tunnel through OpenShift Route
+
 With the deployment running, now we can SSH into the login pod. This example uses the *OpenShift Route* to create a TLS tunnel that we can use as a proxy to get into our SSH server. This is a non-standard way of using SSH but it does hide our server from traditional port scanning operations. A production deployment would most likely use a Service with `Type=LoadBalancer` instead. Security by obscurity is not a substitute for strong security but for this demo it is sufficient.
 
 ```
@@ -53,7 +63,7 @@ ssh -o StrictHostKeyChecking=no -o ProxyCommand="socat - OPENSSL:%h:443,verify=0
 
 By default, the password for `user1` is `user1`
 
-#### Alternatively: Use a port-forward for SSH to login pod
+##### Method 3: Use a port-forward for SSH to login pod
 
 In one terminal window, do the port-forward command:
 
