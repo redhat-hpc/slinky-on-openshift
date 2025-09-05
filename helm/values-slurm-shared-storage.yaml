@@ -5,12 +5,12 @@ persistence:
 slurm:
   login:
     extraVolumeMounts:
-      - name: nfs-home
+      - name: shared-home
         mountPath: /home
     extraVolumes:
-      - name: nfs-home
+      - name: shared-home
         persistentVolumeClaim:
-          claimName: nfs-home
+          claimName: shared-home
 
   compute:
     nodesets:
@@ -28,12 +28,12 @@ slurm:
             memory: 8Gi
         useResourceLimits: true
         extraVolumeMounts:
-          - name: nfs-home
+          - name: shared-home
             mountPath: /home
         extraVolumes:
-          - name: nfs-home
+          - name: shared-home
             persistentVolumeClaim:
-              claimName: nfs-home
+              claimName: shared-home
         partition:
           enabled: true
           config:

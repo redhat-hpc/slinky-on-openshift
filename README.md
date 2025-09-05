@@ -126,7 +126,7 @@ helm install nfs nfs-ganesha-server-and-external-provisioner/nfs-server-provisio
 
 ```
 helm upgrade -i slurm oci://quay.io/slinky-on-openshift/slinky-on-openshift --reset-values -n slurm \
-  -f https://raw.githubusercontent.com/redhat-na-ssa/slinky-on-openshift/refs/heads/main/helm/values-slurm-nfs.yaml
+  -f https://raw.githubusercontent.com/redhat-na-ssa/slinky-on-openshift/refs/heads/main/helm/values-slurm-shared-storage.yaml
 ```
 
 When used with SSH, the homeareas should be created automatically on successful login.

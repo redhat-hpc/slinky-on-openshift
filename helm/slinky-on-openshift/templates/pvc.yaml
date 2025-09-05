@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nfs-home
+  name: shared-home
   labels:
     {{- include "slinky-on-openshift.labels" . | nindent 4 }}
 spec:
