@@ -8,3 +8,28 @@ resources:
   - https://github.com/redhat-cop/gitops-catalog/nfd/instance/overlays/only-nvidia?ref=main
   # GPU
   - https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/instance/overlays/aws
+
+patches:
+  - target:
+      group: nfd.openshift.io
+      kind: NodeFeatureDiscovery
+      name: nfd-instance
+      namespace: openshift-nfd
+      version: v1
+    patch: |-
+      - op: remove
+        path: /spec/operand/image
+
+  - target:
+      group: ocs.openshift.io
+      kind: StorageCluster
+      name: ocs-storagecluster
+      namespace: openshift-storage
+      version: v1
+    patch: |-
+      - op: replace
+        path: /spec/storageDeviceSets/0/dataPVCTemplate/spec/storageClassName
+        value: "gp2-csi"
+      - op: replace
+        path: /spec/enableCephTools
+        value: true
