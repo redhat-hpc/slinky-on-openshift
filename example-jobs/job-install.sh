@@ -15,11 +15,10 @@ echo "source ~/spack/share/spack/setup-env.sh" > ~/.bash_profile
 
 source ~/.bash_profile
 
-echo "spack compiler find"
+set +x
+
 spack compiler find
-echo "spack external find slurm"
+spack compiler find /opt/rh/gcc-toolset-12/root
 spack external find slurm
-echo "spack install openmpi"
 spack install openmpi schedulers=slurm
-echo "spack install hpl"
 spack install hpl
