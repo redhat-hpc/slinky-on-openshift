@@ -1,0 +1,71 @@
+# This values file is supposed to go with the deployment example under deploy/ocp-demo
+
+persistence:
+  enabled: true
+  size: 100Gi
+  storageClass: ocs-storagecluster-cephfs
+
+slurm:
+  login:
+    extraVolumeMounts:
+      - name: shared-home
+        mountPath: /home
+    extraVolumes:
+      - name: shared-home
+        persistentVolumeClaim:
+          claimName: shared-home
+
+  compute:
+    nodesets:
+      - name: debug
+        enabled: true
+        replicas: 2
+        image:
+          repository: ""
+        resources:
+          requests:
+            cpu: 4
+            memory: 8Gi
+          limits:
+            cpu: 4
+            memory: 8Gi
+        useResourceLimits: true
+        extraVolumeMounts:
+          - name: shared-home
+            mountPath: /home
+        extraVolumes:
+          - name: shared-home
+            persistentVolumeClaim:
+              claimName: shared-home
+        partition:
+          enabled: true
+          config:
+            State: UP
+            MaxTime: UNLIMITED
+      - name: gpu
+        enabled: true
+        replicas: 0
+        image:
+          repository: ""
+        resources:
+          requests:
+            cpu: 14
+            memory: 56Gi
+            nvidia.com/gpu: 1
+          limits:
+            cpu: 14
+            memory: 56Gi
+            nvidia.com/gpu: 1
+        useResourceLimits: true
+        extraVolumeMounts:
+          - name: shared-home
+            mountPath: /home
+        extraVolumes:
+          - name: shared-home
+            persistentVolumeClaim:
+              claimName: shared-home
+        partition:
+          enabled: true
+          config:
+            State: UP
+            MaxTime: UNLIMITED
