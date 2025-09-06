@@ -16,13 +16,6 @@ slurm:
             memory: 56Gi
             nvidia.com/gpu: 1
         useResourceLimits: true
-        extraVolumeMounts:
-          - name: nfs-home
-            mountPath: /home
-        extraVolumes:
-          - name: nfs-home
-            persistentVolumeClaim:
-              claimName: nfs-home
         partition:
           enabled: true
           config:
