@@ -92,6 +92,10 @@ slurm:
             State: UP
             MaxTime: UNLIMITED
         nodeConfig: {}
+        updateStrategy:
+          type: RollingUpdate
+          rollingUpdate:
+            maxUnavailable: 20%
 
   accounting:
     image:

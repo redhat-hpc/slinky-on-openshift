@@ -42,6 +42,10 @@ slurm:
           config:
             State: UP
             MaxTime: UNLIMITED
+        updateStrategy:
+          type: RollingUpdate
+          rollingUpdate:
+            maxUnavailable: 20%
       - name: gpu
         enabled: true
         replicas: 0
@@ -72,3 +76,7 @@ slurm:
           config:
             State: UP
             MaxTime: UNLIMITED
+        updateStrategy:
+          type: RollingUpdate
+          rollingUpdate:
+            maxUnavailable: 20%
