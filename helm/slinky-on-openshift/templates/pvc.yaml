@@ -5,6 +5,8 @@ metadata:
   name: shared-home
   labels:
     {{- include "slinky-on-openshift.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/resource-policy": keep
 spec:
   accessModes:
     - ReadWriteMany
