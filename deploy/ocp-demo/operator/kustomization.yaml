@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # ODF
+  - github.com/redhat-cop/gitops-catalog/openshift-data-foundation-operator/operator/base?ref=main
+  - github.com/redhat-cop/gitops-catalog/openshift-data-foundation-operator/config-helpers/node-labeler/overlays/default?ref=main
+  # NFD
+  - https://github.com/redhat-cop/gitops-catalog/nfd/operator/overlays/stable?ref=main
+  # GPU
+  - https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/operator/overlays/stable?ref=main
+
+# because stable-4.19 doesn't exist for ODF yet
+patches:
+  - target:
+      group: operators.coreos.com
+      kind: Subscription
+      name: odf-operator
+      namespace: openshift-storage
+      version: v1alpha1
+    patch: |-
+      - op: replace
+        path: /spec/channel
+        value: stable-4.19
