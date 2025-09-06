@@ -57,6 +57,9 @@ slurm:
             memory: 56Gi
             nvidia.com/gpu: 1
         useResourceLimits: true
+        tolerations:
+          - key: nvidia-gpu-only
+            effect: NoSchedule
         extraVolumeMounts:
           - name: shared-home
             mountPath: /home

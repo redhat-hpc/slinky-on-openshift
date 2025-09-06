@@ -33,3 +33,16 @@ patches:
       - op: replace
         path: /spec/enableCephTools
         value: true
+
+  - target:
+      kind: ConfigMap
+      name: rook-ceph-operator-config
+      namespace: openshift-storage
+    patch: |-
+      - op: add
+        path: /data/CSI_PLUGIN_TOLERATIONS
+        value: |
+          - key: nvidia-gpu-only
+            operator: Exists
+            value: "infra"
+            effect: NoSchedule
