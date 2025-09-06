@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   # ODF
   - github.com/redhat-cop/gitops-catalog/openshift-data-foundation-operator/instance/overlays/aws?ref=main
+  - configmap.yaml
   # NFD
   - https://github.com/redhat-cop/gitops-catalog/nfd/instance/overlays/only-nvidia?ref=main
   # GPU
@@ -33,16 +34,3 @@ patches:
       - op: replace
         path: /spec/enableCephTools
         value: true
-
-  - target:
-      kind: ConfigMap
-      name: rook-ceph-operator-config
-      namespace: openshift-storage
-    patch: |-
-      - op: add
-        path: /data/CSI_PLUGIN_TOLERATIONS
-        value: |
-          - key: nvidia-gpu-only
-            operator: Exists
-            value: "infra"
-            effect: NoSchedule
