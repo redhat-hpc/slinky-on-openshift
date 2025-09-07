@@ -13,6 +13,7 @@ resources:
   - https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/operator/overlays/stable?ref=main
 
   - disable-lightspeed.yaml
+  - clusterautoscaler.yaml
 
 # because stable-4.19 doesn't exist for ODF yet
 # # - github.com/redhat-cop/gitops-catalog/openshift-data-foundation-operator/operator/base?ref=main
