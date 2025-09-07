@@ -31,7 +31,7 @@ jobs:
 
     - name: Build parent-cuda
       run: |
-        docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
           --tag ${{ env.REPO }}/parent:${{ env.SLURM_VERSION }}-cuda \
           images/parent-cuda
 
