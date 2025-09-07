@@ -24,6 +24,9 @@ spec:
         - /bin/bash
         - -c
         - |
+          echo "Found images:"
+          crictl images | grep 'quay.io/slinky-on-openshift'
+          echo "Removing images:"
           crictl images | grep 'quay.io/slinky-on-openshift' | awk '{print $3}' | xargs -r crictl rmi
           echo "done"
           sleep infinity
