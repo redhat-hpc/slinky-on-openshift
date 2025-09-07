@@ -6,10 +6,7 @@
 cd ~
 
 if [ ! -d spack ]; then
-    curl -LO https://github.com/spack/spack/archive/refs/tags/v0.23.1.tar.gz
-    tar -xf v0.23.1.tar.gz
-    rm -rf v0.23.1.tar.gz
-    mv spack-0.23.1/ spack
+    git clone --depth=2 --branch=releases/v1.0 https://github.com/spack/spack.git spack
 fi
 echo "source ~/spack/share/spack/setup-env.sh" > ~/.bash_profile
 
@@ -19,6 +16,6 @@ set +x
 
 spack compiler find
 spack compiler find /opt/rh/gcc-toolset-12/root
-spack external find slurm
+spack external find --all
 spack install openmpi schedulers=slurm
 spack install hpl
