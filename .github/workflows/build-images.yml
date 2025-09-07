@@ -28,7 +28,12 @@ jobs:
         docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
           --tag ${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
           images/parent
-        docker push ${{ env.REPO }}/parent:${{ env.SLURM_VERSION }}
+
+    - name: Build parent-cuda
+      run: |
+        docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
+          --tag ${{ env.REPO }}/parent:${{ env.SLURM_VERSION }}-cuda \
+          images/parent-cuda
 
     - name: Build base
       run: |
@@ -45,6 +50,14 @@ jobs:
           --target=slurmd \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
         docker push ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }}
+
+    - name: Build slurmd-cuda
+      run: |
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:${{ env.SLURM_VERSION }}-cuda \
+          --tag ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }}-cuda \
+          --target=slurmd \
+          upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
+        docker push ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }}-cuda
 
     - name: Build slurmctld
       run: |

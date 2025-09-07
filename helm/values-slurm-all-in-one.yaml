@@ -22,6 +22,7 @@ slurm:
         replicas: 2
         image:
           repository: ""
+          tag: ""
         resources:
           requests:
             cpu: 4
@@ -51,6 +52,7 @@ slurm:
         replicas: 0
         image:
           repository: ""
+          tag: ""
         resources:
           requests:
             cpu: 14

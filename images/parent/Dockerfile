@@ -9,9 +9,5 @@ dnf -q makecache --refresh
 dnf -q -y group install "Development Tools"
 dnf -q -y install libtool gcc-gfortran gcc-toolset-12 \
     python3 python3-pip procps-ng git vim-enhanced hostname man-db hwloc iproute mpitests-openmpi
-
-dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
-dnf -q -y install cuda-toolkit-12 cudnn libnccl libnccl-devel
-
 dnf clean all
 EOR
