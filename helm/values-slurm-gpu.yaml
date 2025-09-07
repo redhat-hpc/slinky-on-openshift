@@ -5,7 +5,8 @@ slurm:
         enabled: true
         replicas: 0
         image:
-          repository: ""
+          repository: quay.io/slinky-on-openshift/slurmd
+          tag: '25.05-cuda'
         resources:
           requests:
             cpu: 14
