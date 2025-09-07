@@ -24,10 +24,20 @@ helm install slurm-operator oci://ghcr.io/slinkyproject/charts/slurm-operator --
 
 ### Install Slurm
 
+Create the namespace with privileged pod security admission:
+
+```
+oc create namespace slurm
+oc label --overwrite ns slurm \
+  pod-security.kubernetes.io/enforce=privileged \
+  pod-security.kubernetes.io/audit=privileged \
+  pod-security.kubernetes.io/warn=privileged
+```
+
 Assuming there is a default storage class set:
 
 ```
-helm install slurm -n slurm oci://quay.io/slinky-on-openshift/slinky-on-openshift --create-namespace
+helm install slurm -n slurm oci://quay.io/slinky-on-openshift/slinky-on-openshift
 ```
 
 This will deploy:
