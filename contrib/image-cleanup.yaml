@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: image-cleanup
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      name: image-cleanup
+  template:
+    metadata:
+      labels:
+        name: image-cleanup
+    spec:
+      serviceAccountName: image-cleanup-sa
+      hostNetwork: true
+      hostPID: true
+      containers:
+      - name: cleanup
+        image: registry.redhat.io/ubi8/ubi-minimal:latest
+        command:
+        - chroot
+        - /host
+        - /bin/bash
+        - -c
+        - |
+          crictl images | grep 'quay.io/slinky-on-openshift' | awk '{print $3}' | xargs -r crictl rmi
+          echo "done"
+          sleep infinity
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: host-root
+          mountPath: /host
+        - name: crio-socket
+          mountPath: /var/run/crio/crio.sock
+      volumes:
+      - name: host-root
+        hostPath:
+          path: /
+      - name: crio-socket
+        hostPath:
+          path: /var/run/crio/crio.sock
+          type: Socket
+      tolerations:
+      - operator: Exists
+      nodeSelector:
+        kubernetes.io/os: linux
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: image-cleanup-sa
+  namespace: default
+---
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: image-cleanup-scc
+allowHostDirVolumePlugin: true
+allowHostNetwork: true
+allowHostPID: true
+allowPrivilegedContainer: true
+allowedCapabilities:
+- '*'
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+users:
+- system:serviceaccount:default:image-cleanup-sa
