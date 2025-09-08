@@ -42,7 +42,6 @@ jobs:
           --tag ${{ env.REPO }}/base:${{ env.SLURM_VERSION }} \
           --target=base \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
-        docker push ${{ env.REPO }}/base:${{ env.SLURM_VERSION }}
 
     - name: Build slurmd
       run: |
@@ -50,7 +49,6 @@ jobs:
           --tag ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }} \
           --target=slurmd \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
-        docker push ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }}
 
     - name: Build slurmd-cuda
       run: |
@@ -58,7 +56,6 @@ jobs:
           --tag ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }}-cuda \
           --target=slurmd \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
-        docker push ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }}-cuda
 
     - name: Build slurmctld
       run: |
@@ -66,7 +63,6 @@ jobs:
           --tag ${{ env.REPO }}/slurmctld:${{ env.SLURM_VERSION }} \
           --target=slurmctld \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
-        docker push ${{ env.REPO }}/slurmctld:${{ env.SLURM_VERSION }}
 
     - name: Build slurmrestd
       run: |
@@ -74,7 +70,6 @@ jobs:
           --tag ${{ env.REPO }}/slurmrestd:${{ env.SLURM_VERSION }} \
           --target=slurmrestd \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
-        docker push ${{ env.REPO }}/slurmrestd:${{ env.SLURM_VERSION }}
 
     - name: Build slurmdbd
       run: |
@@ -82,7 +77,6 @@ jobs:
           --tag ${{ env.REPO }}/slurmdbd:${{ env.SLURM_VERSION }} \
           --target=slurmdbd \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
-        docker push ${{ env.REPO }}/slurmdbd:${{ env.SLURM_VERSION }}
 
     - name: Build sackd
       run: |
@@ -90,7 +84,6 @@ jobs:
           --tag ${{ env.REPO }}/sackd:${{ env.SLURM_VERSION }} \
           --target=sackd \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
-        docker push ${{ env.REPO }}/sackd:${{ env.SLURM_VERSION }}
 
     - name: Build login
       run: |
@@ -98,18 +91,29 @@ jobs:
           --tag ${{ env.REPO }}/login:${{ env.SLURM_VERSION }} \
           --target=login \
           upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
-        docker push ${{ env.REPO }}/login:${{ env.SLURM_VERSION }}
 
     - name: Build login-extra
       run: |
         docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/login:${{ env.SLURM_VERSION }} \
           --tag ${{ env.REPO }}/login-extra:${{ env.SLURM_VERSION }} \
           images/login
-        docker push ${{ env.REPO }}/login-extra:${{ env.SLURM_VERSION }}
 
     # - name: Build slurm workbench
     #   run: |
     #     docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/base:${{ env.SLURM_VERSION }} \
     #       --tag ${{ env.REPO }}/workbench:${{ env.SLURM_VERSION }} \
     #       images/workbench
-    #     docker push ${{ env.REPO }}/workbench:${{ env.SLURM_VERSION }}
+
+
+    - name: Push all images
+      run: |
+        docker push ${{ env.REPO }}/base:${{ env.SLURM_VERSION }}
+        docker push ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }}
+        docker push ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }}-cuda
+        docker push ${{ env.REPO }}/slurmctld:${{ env.SLURM_VERSION }}
+        docker push ${{ env.REPO }}/slurmrestd:${{ env.SLURM_VERSION }}
+        docker push ${{ env.REPO }}/slurmdbd:${{ env.SLURM_VERSION }}
+        docker push ${{ env.REPO }}/sackd:${{ env.SLURM_VERSION }}
+        docker push ${{ env.REPO }}/login:${{ env.SLURM_VERSION }}
+        docker push ${{ env.REPO }}/login-extra:${{ env.SLURM_VERSION }}
+        # docker push ${{ env.REPO }}/workbench:${{ env.SLURM_VERSION }}
