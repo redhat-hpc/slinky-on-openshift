@@ -13,7 +13,7 @@ dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarc
 rpm -ivh --nodeps http://repos.openhpc.community/OpenHPC/3/EL_9/x86_64/ohpc-release-3-1.el9.x86_64.rpm
 dnf -y install lmod-ohpc lmod-defaults-gnu12-openmpi4-ohpc gnu12-compilers-ohpc spack-ohpc examples-ohpc \
   automake-ohpc autoconf-ohpc hwloc-ohpc libtool-ohpc \
-  openmpi4-pmix-gnu12-ohpc openblas-gnu12-ohpc omb-gnu12-openmpi4-ohpc
+  pmix-ohpc openmpi4-pmix-gnu12-ohpc openblas-gnu12-ohpc omb-gnu12-openmpi4-ohpc
 
 dnf clean all
 EOR
