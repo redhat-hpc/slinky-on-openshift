@@ -26,7 +26,7 @@ jobs:
 
     - name: Build parent
       run: |
-        docker build --build-arg PARENT_IMAGE={{ env.PARENT_IMAGE }} \
+        docker build --build-arg PARENT_IMAGE=${{ env.PARENT_IMAGE }} \
           --tag ${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
           images/parent
 
