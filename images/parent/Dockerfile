@@ -5,7 +5,7 @@ RUN <<EOR
 # Install hpc dev env
 set -xeuo pipefail
 dnf -q makecache --refresh
-dnf -q -y install openssl-devel libevent-devel perl-devel hwloc-devel numactl-devel \
+dnf -q -y install openssl-devel libevent-devel perl-devel \
     python3 python3-pip procps-ng git vim-enhanced hostname man-db hwloc numactl libevent iproute
 
 dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
