@@ -3,7 +3,7 @@ name: Build Slurm images
 env:
   REPO: quay.io/slinky-on-openshift
   SLURM_VERSION: 25.05
-  PARENT_IMAGE: registry.access.redhat.com/ubi9/ubi:latest
+  PARENT_IMAGE: quay.io/centos/centos:stream9
 
 on:
   workflow_dispatch:
