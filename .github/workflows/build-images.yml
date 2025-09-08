@@ -3,6 +3,7 @@ name: Build Slurm images
 env:
   REPO: quay.io/slinky-on-openshift
   SLURM_VERSION: 25.05
+  PARENT_IMAGE: registry.access.redhat.com/ubi9/ubi:latest
 
 on:
   workflow_dispatch:
@@ -25,7 +26,7 @@ jobs:
 
     - name: Build parent
       run: |
-        docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
+        docker build --build-arg PARENT_IMAGE={{ env.PARENT_IMAGE }} \
           --tag ${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
           images/parent
 
