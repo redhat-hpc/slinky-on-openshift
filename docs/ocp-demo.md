@@ -17,7 +17,12 @@ helm install slurm -n slurm oci://quay.io/slinky-on-openshift/slinky-on-openshif
 ssh -p 2222 user1@slurm-login.slurm.svc
 ```
 
-# Update the GPU partition
+## Update the GPU partition
 ```
 oc patch -n slurm nodeset slurm-compute-gpu --type=merge -p '{"spec": {"replicas": 2}}'
+```
+
+## Get a GPU allocation
+```
+srun -N 1 -p gpu --pty bash
 ```
