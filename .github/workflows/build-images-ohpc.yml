@@ -1,0 +1,117 @@
+name: Build OpenHPC-based Slurm images
+
+env:
+  REPO: quay.io/slinky-on-openshift
+  PARENT_IMAGE: quay.io/centos/centos:stream9
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [ "main" ]
+
+jobs:
+  build-slurm:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Login to quay.io
+      uses: docker/login-action@v2
+      with:
+        registry: quay.io
+        username: ${{ secrets.QUAY_USERNAME }}
+        password: ${{ secrets.QUAY_PASSWORD }}
+
+    # - name: Build parent
+    #   run: |
+    #     docker build --build-arg PARENT_IMAGE=quay.io/centos/centos:stream9 \
+    #       --tag ${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
+    #       images/parent
+
+    # - name: Build parent-cuda
+    #   run: |
+    #     docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:${{ env.SLURM_VERSION }} \
+    #       --tag ${{ env.REPO }}/parent:${{ env.SLURM_VERSION }}-cuda \
+    #       images/parent-cuda
+
+    - name: Build base
+      run: |
+        docker build --build-arg PARENT_IMAGE=${{ env.PARENT_IMAGE }} \
+          --tag ${{ env.REPO }}/base:ohpc \
+          --target=base \
+          images/ohpc
+
+    - name: Build slurmd
+      run: |
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/base:ohpc \
+          --tag ${{ env.REPO }}/slurmd:ohpc \
+          --target=slurmd \
+          images/ohpc
+
+    # - name: Build slurmd-cuda
+    #   run: |
+    #     docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:${{ env.SLURM_VERSION }}-cuda \
+    #       --tag ${{ env.REPO }}/slurmd:${{ env.SLURM_VERSION }}-cuda \
+    #       --target=slurmd \
+    #       upstream/containers/schedmd/slurm/${{ env.SLURM_VERSION }}/rockylinux9
+
+    - name: Build slurmctld
+      run: |
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/base:ohpc \
+          --tag ${{ env.REPO }}/slurmctld:ohpc \
+          --target=slurmctld \
+          images/ohpc
+
+    - name: Build slurmrestd
+      run: |
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:ohpc \
+          --tag ${{ env.REPO }}/slurmrestd:ohpc \
+          --target=slurmrestd \
+          images/ohpc
+
+    - name: Build slurmdbd
+      run: |
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:ohpc \
+          --tag ${{ env.REPO }}/slurmdbd:ohpc \
+          --target=slurmdbd \
+          images/ohpc
+
+
+    - name: Build sackd
+      run: |
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:ohpc \
+          --tag ${{ env.REPO }}/sackd:ohpc \
+          --target=sackd \
+          images/ohpc
+
+
+    - name: Build login
+      run: |
+        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:ohpc \
+          --tag ${{ env.REPO }}/login:ohpc \
+          --target=login \
+          images/ohpc
+
+    # - name: Build login-extra
+    #   run: |
+    #     docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/login:${{ env.SLURM_VERSION }} \
+    #       --tag ${{ env.REPO }}/login-extra:${{ env.SLURM_VERSION }} \
+    #       images/login
+
+    # - name: Build slurm workbench
+    #   run: |
+    #     docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/base:${{ env.SLURM_VERSION }} \
+    #       --tag ${{ env.REPO }}/workbench:${{ env.SLURM_VERSION }} \
+    #       images/workbench
+    #     docker push ${{ env.REPO }}/workbench:${{ env.SLURM_VERSION }}
+
+    - name: Publish images
+      run: |
+        docker push ${{ env.REPO }}/base:ohpc
+        docker push ${{ env.REPO }}/slurmd:ohpc
+        docker push ${{ env.REPO }}/slurmctld:ohpc
+        docker push ${{ env.REPO }}/slurmrestd:ohpc
+        docker push ${{ env.REPO }}/slurmdbd:ohpc
+        docker push ${{ env.REPO }}/sackd:ohpc
+        docker push ${{ env.REPO }}/login:ohpc
