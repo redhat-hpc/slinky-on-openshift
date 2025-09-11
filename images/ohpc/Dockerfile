@@ -83,7 +83,7 @@ EOF
 systemctl enable journal-console.service
 EOR
 
-FROM base AS slurmctld
+FROM base as slurmctld
 
 USER root
 WORKDIR /tmp/
@@ -116,7 +116,7 @@ EOR
 EXPOSE 6817/tcp
 ENTRYPOINT ["/sbin/init"]
 
-FROM base AS slurmd
+FROM base as slurmd
 
 USER root
 WORKDIR /tmp/
@@ -154,7 +154,7 @@ EOR
 EXPOSE 6818/tcp
 ENTRYPOINT ["/sbin/init"]
 
-FROM base AS slurmdbd
+FROM base as slurmdbd
 
 USER root
 WORKDIR /tmp/
@@ -186,7 +186,7 @@ EOR
 EXPOSE 6819/tcp
 ENTRYPOINT ["/sbin/init"]
 
-FROM base AS slurmrestd
+FROM base as slurmrestd
 
 USER root
 WORKDIR /tmp/
@@ -218,7 +218,7 @@ EOR
 EXPOSE 6820/tcp
 ENTRYPOINT ["/sbin/init"]
 
-FROM base AS sackd
+FROM base as sackd
 
 USER root
 WORKDIR /tmp/
@@ -272,7 +272,7 @@ EOR
 
 ENTRYPOINT ["/sbin/init"]
 
-FROM sackd AS login
+FROM sackd as login
 
 USER root
 WORKDIR /tmp/

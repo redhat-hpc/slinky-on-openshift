@@ -44,9 +44,7 @@ jobs:
 
     - name: Build slurmd
       run: |
-        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/base:ohpc \
-          --tag ${{ env.REPO }}/slurmd:ohpc \
-          --target=slurmd \
+        docker build --tag ${{ env.REPO }}/slurmd:ohpc --target=slurmd \
           images/ohpc
 
     # - name: Build slurmd-cuda
@@ -58,39 +56,27 @@ jobs:
 
     - name: Build slurmctld
       run: |
-        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/base:ohpc \
-          --tag ${{ env.REPO }}/slurmctld:ohpc \
-          --target=slurmctld \
+        docker build --tag ${{ env.REPO }}/slurmctld:ohpc --target=slurmctld \
           images/ohpc
 
     - name: Build slurmrestd
       run: |
-        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:ohpc \
-          --tag ${{ env.REPO }}/slurmrestd:ohpc \
-          --target=slurmrestd \
+        docker build --tag ${{ env.REPO }}/slurmrestd:ohpc --target=slurmrestd \
           images/ohpc
 
     - name: Build slurmdbd
       run: |
-        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:ohpc \
-          --tag ${{ env.REPO }}/slurmdbd:ohpc \
-          --target=slurmdbd \
+        docker build --tag ${{ env.REPO }}/slurmdbd:ohpc --target=slurmdbd \
           images/ohpc
-
 
     - name: Build sackd
       run: |
-        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:ohpc \
-          --tag ${{ env.REPO }}/sackd:ohpc \
-          --target=sackd \
+        docker build --tag ${{ env.REPO }}/sackd:ohpc --target=sackd \
           images/ohpc
-
 
     - name: Build login
       run: |
-        docker build --build-arg PARENT_IMAGE=${{ env.REPO }}/parent:ohpc \
-          --tag ${{ env.REPO }}/login:ohpc \
-          --target=login \
+        docker build --tag ${{ env.REPO }}/login:ohpc --target=login \
           images/ohpc
 
     # - name: Build login-extra
