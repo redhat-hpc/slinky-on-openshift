@@ -52,39 +52,6 @@ for user in $(ls /home/); do
 done
 EOR
 
-RUN <<EOR
-#mask systemd-machine-id-commit.service - partial fix for https://bugzilla.redhat.com/show_bug.cgi?id=1472439
-systemctl mask systemd-remount-fs.service dev-hugepages.mount sys-fs-fuse-connections.mount systemd-logind.service getty.target console-getty.service systemd-udev-trigger.service systemd-udevd.service systemd-random-seed.service systemd-machine-id-commit.service
-
-cat <<EOF > /etc/systemd/system/journal-console.service
-[Unit]
-Description=Forward journal logs to console
-Documentation=man:journalctl(1)
-After=systemd-journald.service
-Wants=systemd-journald.service
-
-[Service]
-Type=simple
-ExecStart=/bin/bash -c '/usr/bin/journalctl --follow --no-pager --output=short > /dev/console'
-Restart=always
-RestartSec=5
-TimeoutStartSec=30
-TimeoutStopSec=10
-
-# Prevent the service from being killed during shutdown
-KillMode=mixed
-KillSignal=SIGTERM
-
-# Run with lower priority
-Nice=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl enable journal-console.service
-EOR
-
 FROM ${BASE_IMAGE} AS slurmctld
 
 USER root
@@ -100,23 +67,10 @@ dnf -q -y install --setopt='install_weak_deps=False' \
 && dnf clean all
 EOR
 
-RUN <<EOR
-systemctl enable slurmctld.service
-
-mkdir -p /etc/systemd/system/slurmctld.service.d/
-cat <<EOF > /etc/systemd/system/slurmctld.service.d/restart-forever.conf
-[Unit]
-StartLimitIntervalSec=0
-StartLimitBurst=0
-
-[Service]
-Restart=always
-RestartSec=10s
-EOF
-EOR
+COPY files/slurmctld/ /
 
 EXPOSE 6817/tcp
-ENTRYPOINT ["/sbin/init"]
+ENTRYPOINT ["entrypoint.sh"]
 
 FROM ${BASE_IMAGE} AS slurmd
 
@@ -138,23 +92,10 @@ sed -i -E "s/^passwd:[[:space:]]+/&slurm /g" /etc/nsswitch.conf
 sed -i -E "s/^group:[[:space:]]+/&slurm /g" /etc/nsswitch.conf
 EOR
 
-RUN <<EOR
-systemctl enable slurmd.service
-
-mkdir -p /etc/systemd/system/slurmd.service.d/
-cat <<EOF > /etc/systemd/system/slurmd.service.d/restart-forever.conf
-[Unit]
-StartLimitIntervalSec=0
-StartLimitBurst=0
-
-[Service]
-Restart=always
-RestartSec=10s
-EOF
-EOR
+COPY files/slurmd/ /
 
 EXPOSE 6818/tcp
-ENTRYPOINT ["/sbin/init"]
+ENTRYPOINT ["entrypoint.sh"]
 
 FROM ${BASE_IMAGE} AS slurmdbd
 
@@ -170,23 +111,8 @@ dnf -q -y install --setopt='install_weak_deps=False' \
 && dnf clean all
 EOR
 
-RUN <<EOR
-systemctl enable slurmdbd.service
-
-mkdir -p /etc/systemd/system/slurmdbd.service.d/
-cat <<EOF > /etc/systemd/system/slurmdbd.service.d/restart-forever.conf
-[Unit]
-StartLimitIntervalSec=0
-StartLimitBurst=0
-
-[Service]
-Restart=always
-RestartSec=10s
-EOF
-EOR
-
 EXPOSE 6819/tcp
-ENTRYPOINT ["/sbin/init"]
+ENTRYPOINT ["tini", "-g", "--", "slurmdbd", "-D"]
 
 FROM ${BASE_IMAGE} AS slurmrestd
 
@@ -202,23 +128,9 @@ dnf -q -y install --setopt='install_weak_deps=False' \
 && dnf clean all
 EOR
 
-RUN <<EOR
-systemctl enable slurmrestd.service
-
-mkdir -p /etc/systemd/system/slurmrestd.service.d/
-cat <<EOF > /etc/systemd/system/slurmrestd.service.d/restart-forever.conf
-[Unit]
-StartLimitIntervalSec=0
-StartLimitBurst=0
-
-[Service]
-Restart=always
-RestartSec=10s
-EOF
-EOR
-
 EXPOSE 6820/tcp
-ENTRYPOINT ["/sbin/init"]
+ENTRYPOINT ["tini", "-g", "--", "slurmrestd"]
+CMD ["0.0.0.0:6820"]
 
 FROM ${BASE_IMAGE} AS sackd
 
@@ -257,22 +169,9 @@ dnf -q -y install --setopt='install_weak_deps=False' \
 mkdir -p /run/slurm/
 EOR
 
-RUN <<EOR
-systemctl enable sackd.service
+COPY files/sackd/ /
 
-mkdir -p /etc/systemd/system/sackd.service.d/
-cat <<EOF > /etc/systemd/system/sackd.service.d/restart-forever.conf
-[Unit]
-StartLimitIntervalSec=0
-StartLimitBurst=0
-
-[Service]
-Restart=always
-RestartSec=10s
-EOF
-EOR
-
-ENTRYPOINT ["/sbin/init"]
+ENTRYPOINT ["entrypoint.sh"]
 
 FROM sackd AS login
 
@@ -296,7 +195,7 @@ authselect select sssd with-mkhomedir --force
 rm -f /etc/ssh/ssh_host_*
 EOR
 
-RUN systemctl enable sshd.service
+COPY files/login/ /
 
 EXPOSE 22/tcp
-ENTRYPOINT ["/sbin/init"]
+ENTRYPOINT ["entrypoint.sh"]
