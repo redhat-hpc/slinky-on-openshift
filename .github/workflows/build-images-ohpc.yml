@@ -52,6 +52,6 @@ jobs:
       - name: Build ${{ matrix.component }} image
         run: |
           docker build --tag ${{ env.REPO }}/${{ matrix.component }}:ohpc --target=${{ matrix.component }} \
-            --build-arg PARENT_IMAGE=${{ env.REPO }}/base:ohpc \
+            --build-arg BASE_IMAGE=${{ env.REPO }}/base:ohpc \
             images/ohpc
           docker push ${{ env.REPO }}/${{ matrix.component }}:ohpc

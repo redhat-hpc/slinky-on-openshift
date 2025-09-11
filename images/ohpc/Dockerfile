@@ -1,4 +1,6 @@
 ARG PARENT_IMAGE=scratch
+ARG BASE_IMAGE=scratch
+
 FROM ${PARENT_IMAGE} AS base
 
 RUN <<EOR
@@ -83,7 +85,7 @@ EOF
 systemctl enable journal-console.service
 EOR
 
-FROM base AS slurmctld
+FROM ${BASE_IMAGE} AS slurmctld
 
 USER root
 WORKDIR /tmp/
@@ -116,7 +118,7 @@ EOR
 EXPOSE 6817/tcp
 ENTRYPOINT ["/sbin/init"]
 
-FROM base AS slurmd
+FROM ${BASE_IMAGE} AS slurmd
 
 USER root
 WORKDIR /tmp/
@@ -154,7 +156,7 @@ EOR
 EXPOSE 6818/tcp
 ENTRYPOINT ["/sbin/init"]
 
-FROM base AS slurmdbd
+FROM ${BASE_IMAGE} AS slurmdbd
 
 USER root
 WORKDIR /tmp/
@@ -186,7 +188,7 @@ EOR
 EXPOSE 6819/tcp
 ENTRYPOINT ["/sbin/init"]
 
-FROM base AS slurmrestd
+FROM ${BASE_IMAGE} AS slurmrestd
 
 USER root
 WORKDIR /tmp/
@@ -218,7 +220,7 @@ EOR
 EXPOSE 6820/tcp
 ENTRYPOINT ["/sbin/init"]
 
-FROM base AS sackd
+FROM ${BASE_IMAGE} AS sackd
 
 USER root
 WORKDIR /tmp/
