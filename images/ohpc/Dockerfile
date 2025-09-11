@@ -197,7 +197,7 @@ RUN <<EOR
 # Install Slurm Packages
 set -xeuo pipefail
 dnf -q -y install --setopt='install_weak_deps=False' \
-  slurm-slurmrestd-ohpc \
+  slurm-ohpc-slurmrestd \
   slurm-ohpc \
 && dnf clean all
 EOR
