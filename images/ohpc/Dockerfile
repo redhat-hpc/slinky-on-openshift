@@ -1,5 +1,5 @@
 ARG PARENT_IMAGE=scratch
-FROM ${PARENT_IMAGE} as base
+FROM ${PARENT_IMAGE} AS base
 
 RUN <<EOR
 # Install hpc dev env
@@ -25,7 +25,7 @@ supervisor tini
 dnf clean all
 EOR
 
-SHELL ["bash", "-lc"]
+SHELL ["/bin/sh", "-lc"]
 
 
 USER root
@@ -83,7 +83,7 @@ EOF
 systemctl enable journal-console.service
 EOR
 
-FROM base as slurmctld
+FROM base AS slurmctld
 
 USER root
 WORKDIR /tmp/
@@ -116,7 +116,7 @@ EOR
 EXPOSE 6817/tcp
 ENTRYPOINT ["/sbin/init"]
 
-FROM base as slurmd
+FROM base AS slurmd
 
 USER root
 WORKDIR /tmp/
@@ -154,7 +154,7 @@ EOR
 EXPOSE 6818/tcp
 ENTRYPOINT ["/sbin/init"]
 
-FROM base as slurmdbd
+FROM base AS slurmdbd
 
 USER root
 WORKDIR /tmp/
@@ -186,7 +186,7 @@ EOR
 EXPOSE 6819/tcp
 ENTRYPOINT ["/sbin/init"]
 
-FROM base as slurmrestd
+FROM base AS slurmrestd
 
 USER root
 WORKDIR /tmp/
@@ -218,7 +218,7 @@ EOR
 EXPOSE 6820/tcp
 ENTRYPOINT ["/sbin/init"]
 
-FROM base as sackd
+FROM base AS sackd
 
 USER root
 WORKDIR /tmp/
@@ -272,7 +272,7 @@ EOR
 
 ENTRYPOINT ["/sbin/init"]
 
-FROM sackd as login
+FROM sackd AS login
 
 USER root
 WORKDIR /tmp/
