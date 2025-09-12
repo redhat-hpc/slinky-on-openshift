@@ -32,7 +32,10 @@ EOR
 
 SHELL ["/bin/sh", "-lc"]
 
-RUN <<EOR
+RUN <<EOR bash
+#!/bin/bash -l
+set -euo pipefail
+
 spack compiler find --scope system
 spack external find --scope system
 spack external find --scope system openmpi
