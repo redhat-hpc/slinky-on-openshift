@@ -32,6 +32,17 @@ EOR
 
 SHELL ["/bin/sh", "-lc"]
 
+RUN <<EOR
+spack compiler find --scope system
+spack external find --scope system
+spack external find --scope system openmpi
+spack external find --scope system slurm
+module load openblas
+spack external find --scope system openblas
+
+spack install hpl
+EOR
+
 
 USER root
 WORKDIR /tmp/
