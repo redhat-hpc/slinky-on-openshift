@@ -11,7 +11,7 @@ slurm:
     imagePullPolicy: IfNotPresent
     image:
       repository: quay.io/slinky-on-openshift/slurmctld
-      tag: '25.05'
+      tag: ohpc
 
 
   mariadb:
@@ -25,15 +25,15 @@ slurm:
   authcred:
     image:
       repository: quay.io/slinky-on-openshift/sackd
-      tag: '25.05'
+      tag: ohpc
 
   login:
     enabled: true
 
     imagePullPolicy: Always
     image:
-      repository: quay.io/slinky-on-openshift/login-extra
-      tag: '25.05'
+      repository: quay.io/slinky-on-openshift/login
+      tag: ohpc
 
     service:
       type: ClusterIP
@@ -61,7 +61,7 @@ slurm:
   compute:
     image:
       repository: quay.io/slinky-on-openshift/slurmd
-      tag: '25.05'
+      tag: ohpc
 
     nodesets:
       - name: debug
@@ -100,7 +100,7 @@ slurm:
   accounting:
     image:
       repository: quay.io/slinky-on-openshift/slurmdbd
-      tag: '25.05'
+      tag: ohpc
 
     external:
       enabled: true
@@ -110,7 +110,7 @@ slurm:
   restapi:
     image:
       repository: quay.io/slinky-on-openshift/slurmrestd
-      tag: '25.05'
+      tag: ohpc
 
 mariadb:
   database_service_name: slurm-mariadb
