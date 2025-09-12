@@ -169,9 +169,7 @@ BuildRequires: pkgconfig
 %endif
 %endif
 
-%if 0%{?openEuler}
 BuildRequires: perl-devel
-%endif
 
 BuildRequires: perl(ExtUtils::MakeMaker)
 
