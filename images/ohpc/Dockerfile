@@ -17,6 +17,9 @@ dnf -y install lmod-ohpc lmod-defaults-gnu12-openmpi4-ohpc gnu12-compilers-ohpc 
   automake-ohpc autoconf-ohpc hwloc-ohpc libtool-ohpc \
   pmix-ohpc openmpi4-pmix-gnu12-ohpc openblas-gnu12-ohpc omb-gnu12-openmpi4-ohpc
 
+# get the custom slurm repo for latest slurm
+dnf -y copr enable jkincl/openhpc-slurm centos-stream-9-x86_64
+
 # Miscellaneous
 dnf -q -y install --setopt='install_weak_deps=False' \
 ncurses
