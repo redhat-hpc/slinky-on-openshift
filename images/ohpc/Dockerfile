@@ -13,7 +13,7 @@ dnf -q -y install openssl-devel libevent-devel perl-devel hwloc-devel numactl-de
 dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
 # redhat-release >= 9.1 is needed by ohpc-release-3-1.el9.x86_64 but we have 9.0 in stream9
 rpm -ivh --nodeps http://repos.openhpc.community/OpenHPC/3/EL_9/x86_64/ohpc-release-3-1.el9.x86_64.rpm
-dnf -y install lmod-ohpc lmod-defaults-gnu12-openmpi4-ohpc gnu12-compilers-ohpc spack-ohpc examples-ohpc \
+dnf -q -y install lmod-ohpc lmod-defaults-gnu12-openmpi4-ohpc gnu12-compilers-ohpc spack-ohpc examples-ohpc \
   automake-ohpc autoconf-ohpc hwloc-ohpc libtool-ohpc \
   pmix-ohpc openmpi4-pmix-gnu12-ohpc openblas-gnu12-ohpc omb-gnu12-openmpi4-ohpc
 
@@ -32,9 +32,11 @@ EOR
 
 SHELL ["/bin/sh", "-lc"]
 
-RUN <<EOR bash
-#!/bin/bash -l
+RUN <<EOR bash -l
+# spack install
 set -euo pipefail
+
+module load spack
 
 spack compiler find --scope system
 spack external find --scope system
