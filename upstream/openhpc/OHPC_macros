@@ -1,0 +1,259 @@
+# OpenHPC build script/utilities
+#
+#-----------------------------------------------------------------------
+# Licensed under the Apache License, Version 2.0 (the "License"); you
+# may not use this file except in compliance with the License. You may
+# obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied. See the License for the specific language governing
+# permissions and limitations under the License.
+#-----------------------------------------------------------------------
+
+# Top-level OpenHPC installation paths
+%global PROJ_NAME       ohpc
+%global OHPC_HOME       /opt/%{PROJ_NAME}
+%global OHPC_ADMIN      %{OHPC_HOME}/admin
+%global OHPC_PUB        %{OHPC_HOME}/pub
+%global OHPC_APPS       %{OHPC_PUB}/apps
+%global OHPC_BIN        %{OHPC_PUB}/bin
+%global OHPC_COMPILERS  %{OHPC_PUB}/compiler
+%global OHPC_LIBS       %{OHPC_PUB}/libs
+%global OHPC_MODULES    %{OHPC_PUB}/modulefiles
+%global OHPC_MODULEDEPS %{OHPC_PUB}/moduledeps
+%global OHPC_MPI_STACKS %{OHPC_PUB}/mpi
+%global OHPC_UTILS      %{OHPC_PUB}/utils
+%global debug_package   %{nil}
+
+%if 0%{?rhel} >= 9 || 0%{?openEuler}
+%{!?dist: %global dist 320.ohpc}
+%else
+%{!?dist: %global dist 27.ohpc}
+%endif
+%{!?PROJ_DELIM: %global PROJ_DELIM -ohpc}
+
+# Update package docs location to include version info (to allow
+# possibility of coinstall of multiple package versions)
+DocDir:    %{OHPC_PUB}/doc/contrib
+%global _docdir_fmt     %{name}-%{version}
+
+# Define PNAME which can be used in modulefile generation for env vars (derived
+# from pname defined in each component .spec file)
+%define PNAME %(echo %{pname} | tr [a-z] [A-Z] | tr - _)
+
+# Definition to replace dots in %%version with underscores
+%define version_exp %(tr "." "_" <<< %{version})
+
+# Instead of having Source[1-9]: OHPC_macros in every SPEC file,
+# this sets Source42 for all SPEC files which include OHPC_macros.
+Source42: OHPC_macros
+
+# Pre-process global OS version macros for operation outside OBS
+# Supports build on clone distros without requiring distro-specific
+# macros defined in each specfile.
+%if 0%{!?rhel_version:1}
+%{?centos_version:%global rhel_version %{centos_version}}
+%{?scientificlinux_version:%global rhel_version %{scientific_version}}
+%if 0%{?rhel} == 7
+    # OBS defines rhel_version to 700 for RHEL7
+    %global rhel_version 700
+%endif
+%if 0%{?rhel} == 8
+    # OBS defines rhel_version to 800 for RHEL8
+    %global rhel_version 800
+%endif
+%endif
+
+# OpenHPC packages also require ohpc-buildroot to access macros used to define
+# compiler and MPI families
+%if 0%{!?ohpc_bootstrap:1}
+Requires: ohpc-filesystem
+BuildRequires: ohpc-buildroot
+%endif
+
+# OpenHPC convention: the default build configuration for compiler/MPI
+# dependent packages assumes the gnu compiler and openmpi family; however,
+# these choices can be overridden by specifing the compiler_family/mpi_family
+# variables via rpmbuild or other mechanisms.
+
+%{!?compiler_family: %global compiler_family gnu14}
+%{!?mpi_family: %global mpi_family openmpi5}
+%{!?python_family: %global python_family python3}
+
+# Compiler dependencies
+%if 0%{?ohpc_compiler_dependent} == 1
+
+%if "%{compiler_family}" == "gnu15"
+BuildRequires: gnu15-compilers%{PROJ_DELIM} >= 14.1.0
+Requires:      gnu15-compilers%{PROJ_DELIM} >= 14.1.0
+%global gnu_family gnu15
+%endif
+%if "%{compiler_family}" == "gnu14"
+BuildRequires: gnu14-compilers%{PROJ_DELIM} >= 14.1.0
+Requires:      gnu14-compilers%{PROJ_DELIM} >= 14.1.0
+%global gnu_family gnu14
+%endif
+%if "%{compiler_family}" == "gnu13"
+BuildRequires: gnu13-compilers%{PROJ_DELIM} >= 13.1.0
+Requires:      gnu13-compilers%{PROJ_DELIM} >= 13.1.0
+%global gnu_family gnu13
+%endif
+%if "%{compiler_family}" == "gnu12"
+BuildRequires: gnu12-compilers%{PROJ_DELIM} >= 12.1.0
+Requires:      gnu12-compilers%{PROJ_DELIM} >= 12.1.0
+%global gnu_family gnu12
+%endif
+%if "%{compiler_family}" == "gnu9"
+BuildRequires: gnu9-compilers%{PROJ_DELIM} >= 9.2.0
+Requires:      gnu9-compilers%{PROJ_DELIM} >= 9.2.0
+%global gnu_family gnu9
+%endif
+
+
+%if "%{compiler_family}" == "intel"
+BuildRequires: gcc-c++ intel-compilers-devel%{PROJ_DELIM}
+Requires:      gcc-c++ intel-compilers-devel%{PROJ_DELIM}
+
+%global __requires_exclude ^lib(cilkrts|ifcoremt|ifport|imf|intlc|iomp5|irc|irng|mkl_.*|svml)\\.so(\\.[25])?\\(.*\\)\\(64bit\\)$
+%endif
+
+%if "%{compiler_family}" == "arm1"
+BuildRequires: arm1-compilers-devel%{PROJ_DELIM}
+Requires:      arm1-compilers-devel%{PROJ_DELIM}
+%endif
+
+%if "%{compiler_family}" == "llvm"
+BuildRequires: llvm-compilers%{PROJ_DELIM} >= 9.0.0
+Requires:      llvm-compilers%{PROJ_DELIM} >= 9.0.0
+%endif
+
+# Disable annobin on RHEL based systems
+%if 0%{?rhel} >= 8
+%undefine _annotated_build
+%endif
+
+%endif
+
+# Disable generation of .build-id links
+%global _build_id_links none
+
+# Disable RPM symlink analysis on files in %%{OHPC_HOME}.
+%global __libsymlink_exclude_path  %{OHPC_HOME}/.*$
+
+# MPI dependencies
+%if 0%{?ohpc_mpi_dependent} == 1
+%if "%{mpi_family}" == "impi"
+BuildRequires: intel-mpi-devel%{PROJ_DELIM}
+Requires:      intel-mpi-devel%{PROJ_DELIM}
+%if "0%{?__requires_exclude}" == "0"
+%global __requires_exclude ^libmpi\\.so.*$|^libmpifort\\.so.*$|^libmpicxx\\.so.*$
+%else
+%global __requires_exclude %{__requires_exclude}|^libmpi\\.so.*$|^libmpifort\\.so.*$|^libmpicxx\\.so.*$
+%endif
+%endif
+%if "%{mpi_family}" == "mpich"
+BuildRequires: mpich-%{compiler_family}%{PROJ_DELIM}
+Requires:      mpich-%{compiler_family}%{PROJ_DELIM}
+%endif
+%if "%{mpi_family}" == "mvapich2"
+BuildRequires: mvapich2-%{compiler_family}%{PROJ_DELIM}
+Requires:      mvapich2-%{compiler_family}%{PROJ_DELIM}
+%endif
+%if "%{mpi_family}" == "openmpi3"
+BuildRequires: openmpi3-%{compiler_family}%{PROJ_DELIM}
+Requires:      openmpi3-%{compiler_family}%{PROJ_DELIM}
+%endif
+%if "%{mpi_family}" == "openmpi4"
+BuildRequires: openmpi4-%{compiler_family}%{PROJ_DELIM}
+Requires:      openmpi4-%{compiler_family}%{PROJ_DELIM}
+%endif
+%if "%{mpi_family}" == "openmpi5"
+BuildRequires: openmpi5-%{compiler_family}%{PROJ_DELIM}
+Requires:      openmpi5-%{compiler_family}%{PROJ_DELIM}
+%endif
+%endif
+
+# Python dependencies and macros
+%if 0%{?ohpc_python_dependent} == 1
+%global python_module_prefix py3-
+%if 0%{?rhel} == 9
+%global python_prefix python3.11
+%global __python /usr/bin/python3.11
+%global python3_pkgversion 3.11
+%global python_lib_dir python%{python3_pkgversion}
+BuildRequires: %{python_prefix}-rpm-macros
+%else
+%if 0%{?sle_version} >= 150500
+%global python_prefix python311
+%global __python /usr/bin/python3.11
+%global python3_pkgversion 3.11
+%global python3_version %{python311_version}
+%global python3_sitearch %{python311_sitearch}
+%global python_lib_dir python%{python3_pkgversion}
+BuildRequires: python3-rpm-macros
+%else
+%global python_prefix python3
+%global __python %__python3
+%global python_lib_dir python%{python3_version}
+BuildRequires: %{python_prefix}-rpm-macros
+%endif
+%endif
+%global python_site_dir %{python3_sitearch}
+BuildRequires: %{python_prefix}-devel
+BuildRequires: %{python_prefix}-setuptools
+Requires:      %{python_prefix}
+%endif
+
+# Single-line macro for running compiler/MPI setup scripts
+# Script bodies are evaluated and stored in this macro definition
+%global ohpc_setup_compiler %{expand:
+%{?OHPC_CFLAGS:export OHPC_CFLAGS=%{OHPC_CFLAGS}}
+%{?OHPC_CXXFLAGS:export OHPC_CXXFLAGS=%{OHPC_CXXFLAGS}}
+%{?OHPC_FCFLAGS:"export OHPC_FCFLAGS=%{OHPC_FCFLAGS}}
+%{?OHPC_F77FLAGS:"export OHPC_F77FLAGS=%{OHPC_F77FLAGS}}
+. %{OHPC_ADMIN}/ohpc/OHPC_setup_compiler %{compiler_family}}
+
+%if 0%{?ohpc_mpi_dependent} == 01
+%global ohpc_setup_compiler %{expand:
+%{ohpc_setup_compiler}
+. %{OHPC_ADMIN}/ohpc/OHPC_setup_mpi %{mpi_family}}
+%endif
+
+# Lua version
+%if 0%{!?luaver:1}
+# Set luaver to lua_version if it exists
+%if 0%{?lua_version:1}
+%global luaver %{lua_version}
+%else
+# Set default Lua version to 5.1, the version used by CentOS 7
+%global luaver 5.1
+# Lua 5.2 is used by older SUSE
+%if 0%{?suse_version} >= 1200 && 0%{?suse_version} < 1350
+%global luaver 5.2
+%endif
+# Lua 5.3 is used by OpenSUSE/SLES 15 and RHEL/CentOS 8
+%if 0%{?sle_version} >= 150000 || 0%{?rhel_version} >=800
+%global luaver 5.3
+%endif
+%endif
+%endif
+
+# check if user desires to override package and modulefile naming with
+# custom delimiter (e.g optimized micro-architecture build)
+
+%global OHPC_CUSTOM_PKG_DELIM %{nil}
+
+%{?OHPC_CUSTOM_DELIM: %global OHPC_CUSTOM_PKG_DELIM -%{OHPC_CUSTOM_DELIM}}
+%{?OHPC_CUSTOM_DELIM: %global PROJ_DELIM -%{OHPC_CUSTOM_DELIM}%{PROJ_DELIM}}
+
+# Handle different package names accross distributions.
+
+%if 0%{?sle_version}
+%global procps procps
+%else
+%global procps procps-ng
+%endif
