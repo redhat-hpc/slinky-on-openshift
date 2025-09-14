@@ -36,7 +36,7 @@ RUN <<EOR bash -l
 # spack install
 set -euo pipefail
 
-module load spack openblas cmake valgrind
+module load spack openblas
 
 spack compiler find --scope system
 spack external find --scope system --all
