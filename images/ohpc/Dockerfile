@@ -48,11 +48,9 @@ spack external find --scope system openblas
 spack install hpl
 
 spack module lmod refresh -y
-cat <<'EOF' | tee /etc/profile.d/z-lmod-spack.sh
-export MODULEPATH=/opt/ohpc/pub/moduledeps/spack:$MODULEPATH
-EOF
 EOR
 
+RUN echo 'export MODULEPATH=/opt/ohpc/pub/moduledeps/spack:$MODULEPATH' > /etc/profile.d/z-lmod-spack.sh
 
 USER root
 WORKDIR /tmp/
