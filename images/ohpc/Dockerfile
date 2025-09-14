@@ -34,7 +34,7 @@ SHELL ["/bin/sh", "-lc"]
 
 RUN <<EOR bash -l
 # spack install
-set -euo pipefail
+set -xeuo pipefail
 
 module load spack openblas
 
@@ -43,8 +43,9 @@ spack external find --scope system --all
 spack external find --scope system openmpi
 spack external find --scope system openblas
 
-spack install hpl
-spack install py-torch
+# choosing Haswell-level compatibility (go with v4 for AVX512)
+spack install hpl target=x86_64_v3
+spack install py-torch target=x86_64_v3
 spack module lmod refresh -y
 EOR
 
