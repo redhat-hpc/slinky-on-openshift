@@ -7,7 +7,7 @@ RUN <<EOR
 # Install hpc dev env
 set -xeuo pipefail
 dnf -q makecache --refresh
-dnf -q -y install openssl-devel libevent-devel perl-devel hwloc-devel numactl-devel \
+dnf -q -y install openssl-devel libevent-devel perl-devel hwloc-devel numactl-devel libcurl-devel \
     python3 python3-pip procps-ng git vim-enhanced hostname man-db hwloc numactl libevent iproute rsync gettext iputils
 
 dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
@@ -39,9 +39,8 @@ set -euo pipefail
 module load spack
 
 spack compiler find --scope system
-spack external find --scope system
+spack external find --scope system --all
 spack external find --scope system openmpi
-spack external find --scope system slurm
 module load openblas
 spack external find --scope system openblas
 
