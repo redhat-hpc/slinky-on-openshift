@@ -52,7 +52,7 @@ slurm:
         replicas: 0
         image:
           repository: quay.io/slinky-on-openshift/slurmd
-          tag: '25.05-cuda'
+          tag: 'ohpc-cuda'
         resources:
           requests:
             cpu: 14
