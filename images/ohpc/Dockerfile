@@ -53,8 +53,6 @@ spack install hpl target=x86_64_v3
 spack module lmod refresh -y
 EOR
 
-RUN echo 'export MODULEPATH=/opt/ohpc/pub/moduledeps/spack:$MODULEPATH' > /etc/profile.d/z-lmod-spack.sh
-
 USER root
 WORKDIR /tmp/
 
