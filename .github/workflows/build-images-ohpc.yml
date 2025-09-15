@@ -34,7 +34,30 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        component: [slurmd, slurmctld, slurmrestd, slurmdbd, sackd, login]
+        include:
+          # Standard components with ohpc tag
+          - component: slurmd
+            target: slurmd
+            tag: ohpc
+          - component: slurmctld
+            target: slurmctld
+            tag: ohpc
+          - component: slurmrestd
+            target: slurmrestd
+            tag: ohpc
+          - component: slurmdbd
+            target: slurmdbd
+            tag: ohpc
+          - component: sackd
+            target: sackd
+            tag: ohpc
+          - component: login
+            target: login
+            tag: ohpc
+          # CUDA component with ohpc-cuda tag
+          - component: slurmd
+            target: slurmd-cuda
+            tag: ohpc-cuda
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +74,7 @@ jobs:
 
       - name: Build ${{ matrix.component }} image
         run: |
-          docker build --tag ${{ env.REPO }}/${{ matrix.component }}:ohpc --target=${{ matrix.component }} \
+          docker build --tag ${{ env.REPO }}/${{ matrix.component }}:${{ matrix.tag }} --target=${{ matrix.target }} \
             --build-arg BASE_IMAGE=${{ env.REPO }}/base:ohpc \
-            images/ohpc
-          docker push ${{ env.REPO }}/${{ matrix.component }}:ohpc
+            images/${{ matrix.tag }}
+          docker push ${{ env.REPO }}/${{ matrix.component }}:${{ matrix.tag }}

@@ -118,6 +118,18 @@ COPY files/slurmd/ /
 EXPOSE 6818/tcp
 ENTRYPOINT ["entrypoint.sh"]
 
+FROM slurmd AS slurmd-cuda
+
+RUN <<EOR bash -l
+# Install CUDA from Spack
+set -xeuo pipefail
+
+module load spack
+
+spack install cuda target=x86_64_v3 cudnn target=x86_64_v3 nccl cuda_arch=75 target=x86_64_v3
+spack module lmod refresh -y
+EOR
+
 FROM ${BASE_IMAGE} AS slurmdbd
 
 USER root
