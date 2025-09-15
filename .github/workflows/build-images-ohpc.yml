@@ -76,5 +76,5 @@ jobs:
         run: |
           docker build --tag ${{ env.REPO }}/${{ matrix.component }}:${{ matrix.tag }} --target=${{ matrix.target }} \
             --build-arg BASE_IMAGE=${{ env.REPO }}/base:ohpc \
-            images/${{ matrix.tag }}
+            images/ohpc
           docker push ${{ env.REPO }}/${{ matrix.component }}:${{ matrix.tag }}
