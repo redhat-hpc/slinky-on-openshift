@@ -45,7 +45,7 @@ spack external find --scope system openblas
 
 # choosing Haswell-level compatibility (go with v4 for AVX512)
 spack install hpl target=x86_64_v3
-spack install py-torch target=x86_64_v3
+# spack install py-torch target=x86_64_v3
 spack module lmod refresh -y
 EOR
 
