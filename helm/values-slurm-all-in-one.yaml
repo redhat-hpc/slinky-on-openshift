@@ -53,6 +53,7 @@ slurm:
         image:
           repository: quay.io/slinky-on-openshift/slurmd
           tag: 'ohpc-cuda'
+        # imagePullPolicy: Always
         resources:
           requests:
             cpu: 14
