@@ -128,7 +128,12 @@ set -xeuo pipefail
 
 module load spack
 
-spack install cuda target=x86_64_v3 cudnn target=x86_64_v3 nccl cuda_arch=75 target=x86_64_v3
+spack install \
+  cuda target=x86_64_v3 \
+  cudnn target=x86_64_v3 \
+  nccl cuda_arch=75 target=x86_64_v3 \
+  nccl-tests cuda_arch=75 arch=x86_64_v3
+
 spack module lmod refresh -y
 EOR
 
