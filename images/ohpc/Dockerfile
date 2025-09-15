@@ -38,6 +38,10 @@ set -xeuo pipefail
 
 module load spack openblas
 
+# adding spack build cache https://cache.spack.io/tag/v0.23.1/
+spack mirror add v0.23.1 https://binaries.spack.io/v0.23.1
+spack buildcache keys --install --trust
+
 spack compiler find --scope system
 spack external find --scope system --all
 spack external find --scope system openmpi
