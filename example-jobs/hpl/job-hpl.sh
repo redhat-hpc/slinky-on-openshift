@@ -1,9 +1,9 @@
 #!/bin/bash
-
 #SBATCH --job-name=hpl
 #SBATCH --nodes=2
 #SBATCH --ntasks=4
 #SBATCH --exclusive
+#SBATCH --time=1:00:00
 
 module load spack hpl
 

@@ -3,6 +3,7 @@
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=4
 #SBATCH --exclusive
+#SBATCH --time=1:00:00
 
 set -x
 

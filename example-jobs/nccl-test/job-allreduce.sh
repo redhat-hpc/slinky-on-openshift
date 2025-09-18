@@ -2,6 +2,7 @@
 #SBATCH -p gpu
 #SBATCH -N 2
 #SBATCH -n 4
+#SBATCH --time=1:00:00
 
 module load nccl-tests
 
