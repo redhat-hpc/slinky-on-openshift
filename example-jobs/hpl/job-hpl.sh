@@ -1,13 +1,14 @@
 #!/bin/bash
 
 #SBATCH --job-name=hpl
-#SBATCH --nodes=3
+#SBATCH --nodes=2
+#SBATCH --ntasks=4
 #SBATCH --exclusive
 
-eval `spack load --sh hpl`
+module load spack hpl
 
 # export OMPI_MCA_btl_tcp_if_exclude=eth0,lo
 
 echo "start $(date)"
-mpirun --display-allocation --map-by=node -np 300 xhpl
+srun --mpi=pmix -n 8 xhpl
 echo "end $(date)"
