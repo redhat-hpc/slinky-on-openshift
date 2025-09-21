@@ -63,6 +63,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: mathio/gha-cleanup@v1
+        if: matrix.target == 'slurmd-cuda'
         with:
           remove-browsers: true
           verbose: true
