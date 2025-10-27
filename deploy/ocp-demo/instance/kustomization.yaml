@@ -12,16 +12,6 @@ resources:
 
 patches:
   - target:
-      group: nfd.openshift.io
-      kind: NodeFeatureDiscovery
-      name: nfd-instance
-      namespace: openshift-nfd
-      version: v1
-    patch: |-
-      - op: remove
-        path: /spec/operand/image
-
-  - target:
       group: ocs.openshift.io
       kind: StorageCluster
       name: ocs-storagecluster
