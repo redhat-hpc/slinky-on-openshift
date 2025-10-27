@@ -1,0 +1,113 @@
+# These resources constitute the fully configured set of manifests
+# used to generate the 'manifests/' directory in a bundle.
+resources:
+  - bases/slurm-operator.clusterserviceversion.yaml
+  - bases/slurm-operator.scc_role.yaml
+  - bases/slurm-operator.scc_rolebinding.yaml
+  - bases/slurm-operator.secrets_role.yaml
+  - bases/slurm-operator.secrets_rolebinding.yaml
+  - bases/slurm-operator.token_role.yaml
+  - bases/slurm-operator.token_rolebinding.yaml
+
+  - ../scorecard
+
+helmCharts:
+  - name: slurm-operator-crds
+    repo: oci://ghcr.io/slinkyproject/charts
+    version: 0.4.1
+    releaseName: slurm-operator-crds
+    skipTests: true
+    includeCRDs: false
+
+  - name: slurm-operator
+    repo: oci://ghcr.io/slinkyproject/charts
+    version: 0.4.1
+    releaseName: slurm-operator
+    namespace: slinky
+    skipTests: true
+    includeCRDs: true
+
+  # Include for samples
+  - name: slurm
+    repo: oci://ghcr.io/slinkyproject/charts
+    version: 0.4.1
+    releaseName: slurm
+    namespace: slurm
+    skipTests: true
+    includeCRDs: true
+    valuesMerge: override
+    valuesInline:
+      accounting:
+        enabled: true
+      slurm-exporter:
+        enabled: false
+      loginsets:
+        slinky:
+          enabled: true
+          login:
+            securityContext:
+              privileged: true
+
+patchesStrategicMerge:
+  - |-
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: slurm-auth-slurm
+      namespace: slurm
+    $patch: delete
+  - |-
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: slurm-auth-jwths256
+      namespace: slurm
+    $patch: delete
+  - |-
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: slurm-login-slinky-sssd-conf
+      namespace: slurm
+    $patch: delete
+
+patches:
+  - target:
+      version: v1
+      kind: Service
+      name: slurm-operator
+    patch: |-
+      - op: remove
+        path: /spec/clusterIP
+  - target:
+      version: v1
+      kind: Service
+      name: slurm-operator-webhook
+    patch: |-
+      - op: add
+        path: /metadata/annotations/service.beta.openshift.io~1serving-cert-secret-name
+        value: slurm-operator-webhook-ca
+  - target:
+      group: admissionregistration.k8s.io
+      version: v1
+      kind: ValidatingWebhookConfiguration
+      name: slurm-operator-webhook
+    patch: |-
+      - op: replace
+        path: /webhooks/0/name
+        value: accountings-validate.slinky.slurm.net
+      - op: replace
+        path: /webhooks/1/name
+        value: controllers-validate.slinky.slurm.net
+      - op: replace
+        path: /webhooks/2/name
+        value: loginsets-validate.slinky.slurm.net
+      - op: replace
+        path: /webhooks/3/name
+        value: nodesets-validate.slinky.slurm.net
+      - op: replace
+        path: /webhooks/4/name
+        value: restapis-validate.slinky.slurm.net
+      - op: replace
+        path: /webhooks/5/name
+        value: tokens-validate.slinky.slurm.net

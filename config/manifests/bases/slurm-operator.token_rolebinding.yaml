@@ -1,0 +1,13 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: slurm-operator-token-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: slurm-operator-token-manager
+subjects:
+  - kind: ServiceAccount
+    name: slurm-operator
+    namespace: slurm-operator-system

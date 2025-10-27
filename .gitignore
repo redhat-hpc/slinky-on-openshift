@@ -1,2 +1,10 @@
 issues*
 notes*
+bin
+
+config/manifests/charts
+bundle
+bundle.Dockerfile
+
+catalog
+catalog.Dockerfile
