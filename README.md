@@ -26,6 +26,9 @@ oc adm new-project slurm
 oc adm policy add-scc-to-user privileged -n slurm -z default
 ```
 
+This `helm` command is overriding the default images in favor of the images built on CentOS Stream 9 and OpenHPC
+but they are not required for running Slinky on OpenShift.
+
 ```
 helm install slurm oci://ghcr.io/slinkyproject/charts/slurm --namespace=slurm \
   --version 0.4.1 \
@@ -44,13 +47,25 @@ helm install slurm oci://ghcr.io/slinkyproject/charts/slurm --namespace=slurm \
   --set loginsets.slinky.login.image.tag=25.05.4-centos9-ohpc \
   --set nodesets.slinky.slurmd.image.repository=quay.io/slinky-on-openshift/slurmd \
   --set nodesets.slinky.slurmd.image.tag=25.05.4-centos9-ohpc \
+  --set nodesets.slinky.replicas=3 \
+  --set-literal loginsets.slinky.rootSshAuthorizedKeys="$(cat $HOME/.ssh/id_rsa.pub)"
+```
+
+The full list of options for the helm chart can be [found in the upstream repository](https://github.com/SlinkyProject/slurm-operator/blob/release-0.4/helm/slurm/values.yaml)
+
+#### Request slurmd Resources
+
+By default, the operator will create slurm worker pods that do not request any CPU/Memory which means they have no
+reserved resources. Resources can be reserved by adding to the helm chart options:
+
+```
   --set nodesets.slinky.slurmd.resources.limits.cpu=15 \
   --set nodesets.slinky.slurmd.resources.requests.cpu=15 \
   --set nodesets.slinky.slurmd.resources.limits.memory=60Gi \
   --set nodesets.slinky.slurmd.resources.requests.memory=56Gi \
-  --set nodesets.slinky.replicas=3 \
-  --set-literal loginsets.slinky.rootSshAuthorizedKeys="$(cat $HOME/.ssh/id_rsa.pub)"
 ```
+
+#### Use shared storage
 
 If you have shared storage deployed already (such as CephFS or NFS), you can add these options to the helm install:
 
