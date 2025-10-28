@@ -1,0 +1,52 @@
+kind: NodeSet
+apiVersion: slinky.slurm.net/v1alpha1
+metadata:
+  name: slurm-gpu-slinky
+  namespace: slurm
+  labels:
+    nodeset.slinky.slurm.net/name: slurm-gpu-slinky
+spec:
+  controllerRef:
+    name: slurm
+    namespace: slurm
+  logfile:
+    image: 'docker.io/library/alpine:latest'
+    resources: {}
+  partition:
+    enabled: true
+  replicas: 2
+  extraConf:
+    Gres=gpu:1
+  slurmd:
+    args: []
+    image: 'quay.io/slinky-on-openshift/slurmd:25.05.4-centos9-ohpc'
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+    volumeMounts:
+      - name: shared-home
+        mountPath: /home
+  template:
+    metadata:
+      labels:
+        nodeset.slinky.slurm.net/name: slurm-gpu-slinky
+    spec:
+      affinity: {}
+      hostname: gpu-
+      imagePullSecrets: null
+      initContainers: []
+      nodeSelector:
+        kubernetes.io/os: linux
+      priorityClassName: null
+      tolerations:
+        - effect: NoSchedule
+          key: nvidia-gpu-only
+          value: ""
+      volumes:
+        - name: shared-home
+          persistentVolumeClaim:
+            claimName: shared-home
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 100%
+    type: RollingUpdate
