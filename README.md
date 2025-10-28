@@ -1,7 +1,7 @@
 # slinky-on-openshift
 Pattern for running the [Slurm operator](https://github.com/SlinkyProject/slurm-operator) on OpenShift
 
-Images are built on top of CentOS Stream and are available on [quay.io](https://quay.io/organization/slinky-on-openshift)
+Images are built out of the [redhat-hpc/slinkyproject-containers](https://github.com/redhat-hpc/slinkyproject-containers) project with CentOS Stream and OpenHPC and are available on [quay.io](https://quay.io/organization/slinky-on-openshift)
 
 ## Quickstart
 
@@ -10,84 +10,92 @@ Images are built on top of CentOS Stream and are available on [quay.io](https://
 * `oc` must be installed
 * `helm` must be installed
 
-### Install cert-manager
-
-Cert-manager needs to be installed before installing Slinky operator
-
 ### Install Slinky, the Slurm Operator
 
-Installing the operator is the [same as upstream](https://github.com/SlinkyProject/slurm-operator/blob/release-0.3/docs/quickstart.md#slurm-operator)
+Install the operator using the OperatorHub:
 
-```
-helm install slurm-operator oci://ghcr.io/slinkyproject/charts/slurm-operator --namespace=slinky --create-namespace --version 0.3.1
-```
+![operatorhub](docs/operatorhub-slurm.png)
 
 ### Install Slurm
 
-Create the namespace with privileged pod security admission:
+Create the namespace with privileged SecurityContextConstraint. This makes it easier to deploy Slurm in
+containers today but in the future we plan to provide a more restrictive SCC that fits what Slurm requires.
 
 ```
-oc create namespace slurm
-oc label --overwrite ns slurm \
-  pod-security.kubernetes.io/enforce=privileged \
-  pod-security.kubernetes.io/audit=privileged \
-  pod-security.kubernetes.io/warn=privileged
+oc adm new-project slurm
+oc adm policy add-scc-to-user privileged -n slurm -z default
 ```
 
-Assuming there is a default storage class set:
+```
+helm install slurm oci://ghcr.io/slinkyproject/charts/slurm --namespace=slurm \
+  --version 0.4.1 \
+  --set configFiles.gres\\.conf="AutoDetect=nvidia" \
+  --set loginsets.slinky.enabled=true \
+  --set loginsets.slinky.login.securityContext.privileged=true \
+  --set controller.slurmctld.image.repository=quay.io/slinky-on-openshift/slurmctld \
+  --set controller.slurmctld.image.tag=25.05.4-centos9-ohpc \
+  --set controller.reconfigure.image.repository=quay.io/slinky-on-openshift/slurmctld \
+  --set controller.reconfigure.image.tag=25.05.4-centos9-ohpc \
+  --set restapi.slurmrestd.image.repository=quay.io/slinky-on-openshift/slurmrestd \
+  --set restapi.slurmrestd.image.tag=25.05.4-centos9-ohpc \
+  --set accounting.slurmdbd.image.repository=quay.io/slinky-on-openshift/slurmdbd \
+  --set accounting.slurmdbd.image.tag=25.05.4-centos9-ohpc \
+  --set loginsets.slinky.login.image.repository=quay.io/slinky-on-openshift/login \
+  --set loginsets.slinky.login.image.tag=25.05.4-centos9-ohpc \
+  --set nodesets.slinky.slurmd.image.repository=quay.io/slinky-on-openshift/slurmd \
+  --set nodesets.slinky.slurmd.image.tag=25.05.4-centos9-ohpc \
+  --set nodesets.slinky.slurmd.resources.limits.cpu=15 \
+  --set nodesets.slinky.slurmd.resources.requests.cpu=15 \
+  --set nodesets.slinky.slurmd.resources.limits.memory=60Gi \
+  --set nodesets.slinky.slurmd.resources.requests.memory=56Gi \
+  --set nodesets.slinky.replicas=3 \
+  --set-literal loginsets.slinky.rootSshAuthorizedKeys="$(cat $HOME/.ssh/id_rsa.pub)"
+```
+
+If you have shared storage deployed already (such as CephFS or NFS), you can add these options to the helm install:
 
 ```
-helm install slurm -n slurm oci://quay.io/slinky-on-openshift/slinky-on-openshift
+  --set-json 'loginsets.slinky.login.volumeMounts=[{"name":"shared-home","mountPath":"/home"}]' \
+  --set-json 'loginsets.slinky.podSpec.volumes=[{"name":"shared-home","persistentVolumeClaim":{"claimName":"shared-home"}}]' \
+  --set-json 'nodesets.slinky.slurmd.volumeMounts=[{"name":"shared-home","mountPath":"/home"}]' \
+  --set-json 'nodesets.slinky.podSpec.volumes=[{"name":"shared-home","persistentVolumeClaim":{"claimName":"shared-home"}}]' \
 ```
 
-This will deploy:
+Shared storage can be created using a PersistentVolumeClaim
 
-* Base namespace, SecurityContextConstraint, and RoleBindings
-* GLAuth for managing LDAP auth
-* Expose the login pod SSH server over a TLS route
-* Slurm deployment
+```
+cat << EOF | oc create -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shared-home
+  namespace: slurm
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 500Gi
+  storageClassName: ocs-storagecluster-cephfs
+  volumeMode: Filesystem
+EOF
 
-> [!IMPORTANT]
-> By default, glauth configuration has `user1` with a password `user1` which is insecure
+```
 
 ### Testing
 
 #### SSH to login pod
 
-##### Method 1: SSH from OpenShift Console Web Terminal
+With the deployment running, now we can SSH into the login pod. The helm chart will use a Service of `Type=LoadBalancer`
+but that is dependent on the cloud provider or something like MetalLB being deployed on-premise.
 
-If we are using the web terminal we can SSH directly into the login service:
-
-```
-ssh -p 2222 user1@slurm-login.slurm.svc
-```
-
-##### Method 2: SSH via TLS tunnel through OpenShift Route
-
-With the deployment running, now we can SSH into the login pod. This example uses the *OpenShift Route* to create a TLS tunnel that we can use as a proxy to get into our SSH server. This is a non-standard way of using SSH but it does hide our server from traditional port scanning operations. A production deployment would most likely use a Service with `Type=LoadBalancer` instead. Security by obscurity is not a substitute for strong security but for this demo it is sufficient.
+We can use a simple ProxyCommand to access the SSH server with `socat` in the container image:
 
 ```
-SSH_ROUTE=$(oc get route -n slurm slurm-login -o jsonpath={.status.ingress[0].host})
-ssh -o StrictHostKeyChecking=no -o ProxyCommand="socat - OPENSSL:%h:443,verify=0" user1@$SSH_ROUTE
+ssh -o ProxyCommand='oc exec -i -n slurm svc/%h -- socat STDIO TCP:localhost:22' root@slurm-login-slinky
 ```
 
-By default, the password for `user1` is `user1`
-
-##### Method 3: Use a port-forward for SSH to login pod
-
-In one terminal window, do the port-forward command:
-
-```
-oc -n slurm port-forward deploy/slurm-login 2222:22
-```
-
-In a second window, ssh:
-
-```
-ssh -o StrictHostKeyChecking=no -p 2222 user1@localhost
-```
-
-By default, the password for `user1` is `user1`
+The helm chart deploys the login pod and injects the SSH public key for the root user
 
 #### Run a job
 
@@ -112,10 +120,11 @@ srun -n 1 -t 1:00 hostname
 
 ```
 helm uninstall slurm -n slurm
-helm uninstall slinky -n slinky
 ```
 
-## Optional: Shared filesystem with NFS
+Uninstall the slurm-operator using the Operator Lifecycle Manager on the OpenShift Console.
+
+<!--## Optional: Shared filesystem with NFS
 
 Alternatively to the quickstart, we can deploy Slurm with a shared home area. If you have already deployed Slurm then uninstall the quickstart before installing the example with NFS
 
@@ -139,9 +148,9 @@ helm upgrade -i slurm oci://quay.io/slinky-on-openshift/slinky-on-openshift --re
   -f https://raw.githubusercontent.com/redhat-na-ssa/slinky-on-openshift/refs/heads/main/helm/values-slurm-shared-storage.yaml
 ```
 
-When used with SSH, the homeareas should be created automatically on successful login.
+When used with SSH, the homeareas should be created automatically on successful login.-->
 
-## Optional: Enable Autoscaling
+<!--## Optional: Enable Autoscaling
 
 https://github.com/SlinkyProject/slurm-operator/blob/main/docs/autoscaling.md
 
@@ -171,41 +180,4 @@ https://docs.redhat.com/en/documentation/openshift_container_platform/4.17/html/
 
 ```
 oc apply -k deploy/keda
-```
-
-## Extra: OpenShift Route for SSH
-
->[!NOTE]
-> If you deployed the quickstart then the SSH route has been deployed for you!
-
-> [!CAUTION]
-> Exposing the SSH server in the login pod with easy to guess usernames and passwords is DANGEROUS.
-> If you uncommented the simple user1-6 users in glauth configuration then you may be opening up an attack vector to your cluster.
-
-Sometimes it is difficult to open up ports on the cluster for a LoadBalancer or NodePort service. Alternatively we can use the OpenShift Router (L4/L7 LB) to proxy SSH through a TLS tunnel.
-
-> [!NOTE]
-> Using TLS to tunnel traffic through the OpenShift Router does reduce the attach surface but it does not remove the threat.
-
-```
-oc apply -k deploy/ssh
-```
-
-Using SSH client and openssl, SSH through OpenShift Route proxy to the login pod. The self signed certificate that openssl complains about is the certificate of the terminating proxy running on the login pod and is fine to disregard.
-
-Specifically, we are not authenticating the connection between the OpenShift router and the backend login pod inside the OpenShift cluster.
-
-```
-SSH_ROUTE=$(oc get route -n slurm slurm-login -o jsonpath={.status.ingress[0].host})
-ssh -o ProxyCommand="openssl s_client -verify_quiet -connect %h:443 " user1@$SSH_ROUTE
-```
-
-## Optional: Building images
-
-By default we can use the images built by GH Actions and hosted on quay.io/slinky-on-openshift
-
-Using OpenShift Pipelines
-
-```
-oc apply -k deploy/build-pipeline
-```
+```-->
