@@ -258,6 +258,5 @@ spec:
   maturity: alpha
   minKubeVersion: "1.29.0"
   provider:
-    name: SchedMD
-    url: https://www.schedmd.com/slinky
+    name: Red Hat HPC Community
   version: 0.0.0
