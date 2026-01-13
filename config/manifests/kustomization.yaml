@@ -39,14 +39,49 @@ helmCharts:
     valuesInline:
       accounting:
         enabled: true
-      slurm-exporter:
-        enabled: false
+        slurmdbd:
+          image:
+            repository: quay.io/slinky-on-openshift/slurmdbd
+            tag: 25.05.4-centos9-ohpc
+      controller:
+        slurmctld:
+          image:
+            repository: quay.io/slinky-on-openshift/slurmctld
+            image: 25.05.4-centos9-ohpc
+        reconfigure:
+          image:
+            repository: quay.io/slinky-on-openshift/slurmctld
+            tag: 25.05.4-centos9-ohpc
+        logfile:
+          image:
+            repository: registry.redhat.io/ubi9/ubi
+            tag: latest
+      nodesets:
+        slinky:
+          logfile:
+            image:
+              repository: registry.redhat.io/ubi9/ubi
+              tag: latest
+          slurmd:
+            image:
+              repository: quay.io/slinky-on-openshift/slurmd
+              tag: 25.05.4-centos9-ohpc
       loginsets:
         slinky:
           enabled: true
           login:
+            image:
+              repository: quay.io/slinky-on-openshift/login
+              tag: 25.05.4-centos9-ohpc
             securityContext:
               privileged: true
+      restapi:
+        slurmrestd:
+          image:
+            repository: quay.io/slinky-on-openshift/slurmrestd
+            tag: 25.05.4-centos9-ohpc
+      slurm-exporter:
+        enabled: false
 
 patchesStrategicMerge:
   - |-

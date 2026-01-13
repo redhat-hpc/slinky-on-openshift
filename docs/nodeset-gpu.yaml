@@ -10,16 +10,15 @@ spec:
     name: slurm
     namespace: slurm
   logfile:
-    image: 'docker.io/library/alpine:latest'
+    image: "docker.io/library/alpine:latest"
     resources: {}
   partition:
     enabled: true
-  replicas: 2
-  extraConf:
-    Gres=gpu:1
+  replicas: 3
+  extraConf: Gres=gpu:1
   slurmd:
     args: []
-    image: 'quay.io/slinky-on-openshift/slurmd:25.05.4-centos9-ohpc'
+    image: "quay.io/slinky-on-openshift/slurmd-cuda:25.05.4-centos9-ohpc"
     resources:
       limits:
         nvidia.com/gpu: 1
