@@ -14,14 +14,14 @@ resources:
 helmCharts:
   - name: slurm-operator-crds
     repo: oci://ghcr.io/slinkyproject/charts
-    version: 0.4.1
+    version: 1.0.0
     releaseName: slurm-operator-crds
     skipTests: true
     includeCRDs: false
 
   - name: slurm-operator
     repo: oci://ghcr.io/slinkyproject/charts
-    version: 0.4.1
+    version: 1.0.0
     releaseName: slurm-operator
     namespace: slinky
     skipTests: true
@@ -30,7 +30,7 @@ helmCharts:
   # Include for samples
   - name: slurm
     repo: oci://ghcr.io/slinkyproject/charts
-    version: 0.4.1
+    version: 1.0.0
     releaseName: slurm
     namespace: slurm
     skipTests: true

@@ -5,7 +5,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the build target (e.g make build VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 0.4.1-2
+VERSION ?= 1.0.0
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -193,7 +193,7 @@ bundle-build-ocp: oc bundle ## Build bundle with OpenShift BuildConfig using int
 
 
 .PHONY: catalog-build-ocp
-catalog-build-ocp: oc catalog-build-local ## Build catalog with OpenShift BuildConfig using internal registry
+catalog-build-ocp: oc catalog-local ## Build catalog with OpenShift BuildConfig using internal registry
 	$(eval IMAGE_TAG_BASE := image-registry.openshift-image-registry.svc:5000/default/slurm-operator)
 	$(eval CATALOG_IMG := $(IMAGE_TAG_BASE)-catalog:v$(VERSION))
 	$(OC) new-build --name slurm-operator-catalog --binary --to $(CATALOG_IMG) || true
@@ -218,7 +218,7 @@ clean-ocp-images: ## Clean up OpenShift ImageStreams
 clean-ocp-all: clean-ocp-builds clean-ocp-images ## Clean up OpenShift configs
 
 ##@ Catalog
-.PHONY: catalog-build-local
+.PHONY: catalog-local
 catalog-local: opm bundle ## Build a catalog image from local bundle directory.
 	rm -rf $(CATALOG_DIR) $(CATALOG_DIR).Dockerfile
 	mkdir -p $(CATALOG_DIR)
@@ -263,6 +263,13 @@ catalog-push: ## Push the catalog image.
 .PHONY: catalog-deploy
 catalog-deploy: ## Deploy the catalog to the cluster.
 	@echo "Creating CatalogSource..."
+	@echo '$(CATALOGSOURCE_JSON)' | oc apply -f -
+
+.PHONY: catalog-deploy-local
+catalog-deploy-local: ## Deploy the catalog to the cluster.
+	@echo "Creating CatalogSource from local..."
+	$(eval IMAGE_TAG_BASE := image-registry.openshift-image-registry.svc:5000/default/slurm-operator)
+	$(eval CATALOG_IMG := $(IMAGE_TAG_BASE)-catalog:v$(VERSION))
 	@echo '$(CATALOGSOURCE_JSON)' | oc apply -f -
 
 .PHONY: catalog-clean
