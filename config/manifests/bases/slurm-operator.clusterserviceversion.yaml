@@ -79,6 +79,39 @@ spec:
 
     Run [Slurm] on [Kubernetes], by [SchedMD]. A [Slinky] project.
 
+    ## Documentation
+
+    Project documentation is located in the docs directory of [this repository](https://github.com/SlinkyProject/slurm-operator)
+
+    There is also supplemental work in the community for enabling [Slinky On OpenShift](https://github.com/redhat-hpc/slinky-on-openshift)
+
+    ## Quickstart with Slinky on OpenShift
+
+    Create the namespace with privileged SecurityContextConstraint. This makes it easier to deploy Slurm in
+    containers today but in the future we plan to provide a more restrictive SCC that fits what Slurm requires.
+
+    ```
+    oc adm new-project slurm
+    oc adm policy add-scc-to-user privileged -n slurm -z default
+    ```
+
+    This `helm` command deploys the Slurm operator on OpenShift with the upstream chart and uses a SSH key
+    for the root user of the LoginSet:
+
+    ```
+    helm install slurm oci://ghcr.io/slinkyproject/charts/slurm --namespace=slurm \
+      --version 1.0.1 \
+      --set loginsets.slinky.enabled=true \
+      --set loginsets.slinky.login.securityContext.privileged=true \
+      --set-literal loginsets.slinky.rootSshAuthorizedKeys="$(cat $HOME/.ssh/id_rsa.pub)"
+    ```
+
+    Then SSH to the login pod:
+
+    ```
+    ssh -o ProxyCommand='oc exec -i -n slurm svc/%h -- socat STDIO TCP:localhost:22' root@slurm-login-slinky
+    ```
+
     ## Overview
 
     [Slurm] and [Kubernetes] are workload managers originally designed for different
@@ -170,12 +203,6 @@ spec:
     | Kubernetes | [v1.29](https://kubernetes.io/blog/2023/12/13/kubernetes-v1-29-release/) |
     | Slurm      | [25.05](https://www.schedmd.com/slurm-version-25-05-0-is-now-available/) |
 
-    ## Documentation
-
-    Project documentation is located in the docs directory of [this repository](https://github.com/SlinkyProject/slurm-operator)
-
-    There is also supplemental work in the community for enabling [Slinky On OpenShift](https://github.com/redhat-hpc/slinky-on-openshift)
-
     ## Support and Development
 
     Feature requests, code contributions, and bug reports are welcome!
@@ -250,9 +277,9 @@ spec:
     - slinky
   links:
     - name: Slinky on OpenShift
-      url: https://github.com/redhat-hpc/slinky-on-openshift
+      url: https://github.com/redhat-hpc/slinky-on-openshift/tree/v1.0.1
     - name: Slurm Operator
-      url: https://github.com/SlinkyProject/slurm-operator
+      url: https://github.com/SlinkyProject/slurm-operator/tree/v1.0.1
   maintainers:
     - name: Jason Kincl
       email: jkincl@redhat.com
