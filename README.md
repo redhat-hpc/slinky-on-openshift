@@ -31,7 +31,7 @@ but they are not required for running Slinky on OpenShift.
 
 ```
 helm install slurm oci://ghcr.io/slinkyproject/charts/slurm --namespace=slurm \
-  --version 0.4.1 \
+  --version 1.0.1 \
   --set configFiles.gres\\.conf="AutoDetect=nvidia" \
   --set loginsets.slinky.enabled=true \
   --set loginsets.slinky.login.securityContext.privileged=true \
@@ -51,7 +51,7 @@ helm install slurm oci://ghcr.io/slinkyproject/charts/slurm --namespace=slurm \
   --set-literal loginsets.slinky.rootSshAuthorizedKeys="$(cat $HOME/.ssh/id_rsa.pub)"
 ```
 
-The full list of options for the helm chart can be [found in the upstream repository](https://github.com/SlinkyProject/slurm-operator/blob/release-0.4/helm/slurm/values.yaml)
+The full list of options for the helm chart can be [found in the upstream repository](https://github.com/SlinkyProject/slurm-operator/blob/release-1.0/helm/slurm/values.yaml)
 
 #### Request slurmd Resources
 
