@@ -5,7 +5,7 @@ metadata:
     alm-examples: "[]"
     capabilities: Basic Install
     categories: "AI/Machine Learning, Big Data"
-    containerImage: ghcr.io/slinkyproject/slurm-operator:1.0.0
+    containerImage: ghcr.io/slinkyproject/slurm-operator:1.0.1
     createdAt: "2025-09-12T19:16:49Z"
     support: SchedMD
     certified: "false"
