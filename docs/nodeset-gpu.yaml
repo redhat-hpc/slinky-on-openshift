@@ -18,7 +18,7 @@ spec:
   extraConf: Gres=gpu:1
   slurmd:
     args: []
-    image: "quay.io/slinky-on-openshift/slurmd-cuda:25.05.4-centos9-ohpc"
+    image: "quay.io/slinky-on-openshift/slurmd-cuda:25.11.1-centos9-ohpc"
     resources:
       limits:
         nvidia.com/gpu: 1
