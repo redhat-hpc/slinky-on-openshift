@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rook-ceph-operator-config
+  namespace: openshift-storage
+data:
+  CSI_PLUGIN_TOLERATIONS: |
+    - key: nvidia-gpu-only
+      operator: Exists
+      value: "infra"
+      effect: NoSchedule

@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # web terminal
+  - https://github.com/redhat-cop/gitops-catalog/web-terminal/operator/overlays/fast?ref=71dc188d07addc070a3047ae3c3af32a1c2add5b
+
+  # ODF 4.19
+  - github.com/redhat-cop/gitops-catalog/openshift-data-foundation-operator/operator/overlays/stable-4.19?ref=554c340e4cd92703701dc5d1c7dbed90b4dca880
+  - ../../aws-machineset
+  - github.com/redhat-cop/gitops-catalog/openshift-data-foundation-operator/config-helpers/node-labeler/overlays/default?ref=9f00dfed1214a628c6419ac3517417bd05f4da82
+
+  # NFD
+  - https://github.com/redhat-cop/gitops-catalog/nfd/operator/overlays/stable?ref=main
+  # GPU
+  - https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/operator/overlays/stable?ref=main
+
+  - disable-lightspeed.yaml
+
+patches:
+  - target:
+      group: batch
+      version: v1
+      kind: Job
+      name: storage-cluster-label-worker-nodes
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: 'node-role.kubernetes.io/storage'
